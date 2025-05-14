@@ -7,9 +7,11 @@ setup lsst_distrib
 
 python set_stamp.py
 
-python inject_sourece.py
+python inject_source.py
 
-#python diffim_detect.py
+python diffim_detect.py
+
+python check_completeness.py
 
 #python associate.py
 
