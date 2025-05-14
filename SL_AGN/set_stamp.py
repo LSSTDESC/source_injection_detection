@@ -10,12 +10,6 @@ TIME_INDEX_LIST = [
 0,
 ]
 
-CALEXP_STAMP_FILENAME_LIST = ["%s/system_%d_%d.fits"%(FIG_FOLDER, SYSTEM_INDEX, i) for i in TIME_INDEX_LIST]
-COADD_STAMP_FILENAME = "%s/system_%d_coadd.fits"%(FIG_FOLDER, SYSTEM_INDEX)
-
-MAG_LIST = [
-15.,
-]
 
 #----------------------------
 newline("Start!")
