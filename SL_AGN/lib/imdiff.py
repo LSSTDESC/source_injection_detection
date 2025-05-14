@@ -2,7 +2,9 @@ from lib.tools import *
 
 from lsst.ip.diffim.subtractImages import AlardLuptonSubtractTask, AlardLuptonSubtractConfig
 from lsst.ip.diffim import detectAndMeasure
+from lsst.ap.association import DiaPipelineTask
 
+import pandas as pd
 
 
 #======================================
@@ -35,15 +37,14 @@ def detect_measure(scienceExposure, templateExposure, difference):
 
     return diff_dm_result
 
-
-#def get_diaSources(diff_dm_result): 
-#    
-#    diaSources = diff_dm_result.diaSources.asAstropy()
-#
-#    save_pickle("diaSources", diaSources)
-
    
 
 
-#def get_object():
-#associateDiaSources
+def get_object(diaSourceTable, diffIm, diaObjects=pd.DataFrame(), solarSystemObjectTable=pd.DataFrame()):
+    # https://pipelines.lsst.io/py-api/lsst.ap.association.DiaPipelineTask.html#lsst.ap.association.DiaPipelineTask.associateDiaSources
+    
+    associatedDiaSources, newDiaObjects = DiaPipelineTask.associateDiaSources(diaSourceTable, solarSystemObjectTable, diffIm, diaObjects)
+    print(associatedDiaSources)
+    print(newDiaObjects)
+    return newDiaObjects
+    
