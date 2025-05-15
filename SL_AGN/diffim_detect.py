@@ -174,7 +174,9 @@ newline("plot_diff_image_catalog")
 plot_diff_image_catalog(difference_image, diff_dm_result.diaSources)
 
 #----------------------------
-diaSources = diff_dm_result.diaSources.asAstropy()
+# lsst.afw.table.SourceCatalog
+# https://pipelines.lsst.io/py-api/lsst.afw.table.SourceCatalog.html#lsst.afw.table.SourceCatalog
+diaSources = diff_dm_result.diaSources #.asAstropy()
 save_pickle("diaSources", diaSources)
 
 

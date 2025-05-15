@@ -13,6 +13,7 @@ setup lsst_distrib
 
 #python check_completeness.py
 
+#apdb-cli create-sql "sqlite:///apdb.db" apdb_config.py
 python associate.py
 
 #============================

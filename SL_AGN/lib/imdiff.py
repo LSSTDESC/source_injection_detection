@@ -2,7 +2,9 @@ from lib.tools import *
 
 from lsst.ip.diffim.subtractImages import AlardLuptonSubtractTask, AlardLuptonSubtractConfig
 from lsst.ip.diffim import detectAndMeasure
-from lsst.ap.association import DiaPipelineTask
+#from lsst.ip.diffim import DetectAndMeasureTask #?
+
+from lsst.ap.association import DiaPipelineTask, DiaPipelineConfig, TransformDiaSourceCatalogTask
 
 import pandas as pd
 
@@ -39,12 +41,47 @@ def detect_measure(scienceExposure, templateExposure, difference):
 
    
 
+def diaSrc2pdDf(diaSourceCat, diffIm, band):
 
-def get_object(diaSourceTable, diffIm, diaObjects=pd.DataFrame(), solarSystemObjectTable=pd.DataFrame()):
-    # https://pipelines.lsst.io/py-api/lsst.ap.association.DiaPipelineTask.html#lsst.ap.association.DiaPipelineTask.associateDiaSources
+    # Convert SourceCatalog to Pandas dataframe
+    initInputs = {}
+    initInputs['diaSourceSchema'] = diaSourceCat
+    task = TransformDiaSourceCatalogTask(initInputs)
+    res = task.run(diaSourceCat, diffIm, band)
     
-    associatedDiaSources, newDiaObjects = DiaPipelineTask.associateDiaSources(diaSourceTable, solarSystemObjectTable, diffIm, diaObjects)
-    print(associatedDiaSources)
-    print(newDiaObjects)
-    return newDiaObjects
+    return res.diaSourceTable
+    
+    
+
+def get_object(diaSourceCat, diffIm, band, diaObjects=None, solarSystemObjectTable=None):
+    
+    # https://pipelines.lsst.io/py-api/lsst.ap.association.DiaPipelineTask.html#lsst.ap.association.DiaPipelineTask.associateDiaSources
+    # https://github.com/lsst/ap_association/blob/7cc9b91cc9da2cce2b05af381bd34bbc5b5e6069/python/lsst/ap/association/diaPipe.py#
+
+    # It looks like we need to merge the new DIA object catalog with the old one
+    # Maybe it's better to run the dia pipeline as a whole
+
+    diaSourceTable = diaSrc2pdDf(diaSourceCat, diffIm, band)
+    
+    config = DiaPipelineConfig()
+    config.apdb_config_url = "apdb_config.py"
+    
+    task = DiaPipelineTask(config=config)
+
+    if diaObjects is None:
+        print("diaObjects is None!")
+        struct = task.createNewDiaObjects(diaSourceTable)
+        print("diaSources: ", struct.diaSources)
+        print("newDiaObjects: ", struct.newDiaObjects)
+        print("nNewDiaObjects: ", struct.nNewDiaObjects)
+
+        return struct.newDiaObjects
+        
+    else:
+        struct = task.associateDiaSources(diaSourceTable, solarSystemObjectTable, diffIm, diaObjects)
+        print("associatedDiaSources: ", struct.associatedDiaSources)
+        print("newDiaObjects: ", struct.newDiaObjects)
+        print("newDiaSources: ", struct.newDiaSources)
+        print("marginalDiaSources: ", struct.marginalDiaSources)
+        return struct.newDiaObjects
     

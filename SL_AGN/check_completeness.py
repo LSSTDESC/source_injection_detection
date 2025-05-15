@@ -9,6 +9,7 @@ from lib.analysis import *
 #======================================
 inj_catalog = load_pickle("inj_catalog_calexp")
 diaSources = load_pickle("diaSources")
+diaSources = diaSources.asAstropy()
 
 
 #--------------------------------------
