@@ -4,7 +4,7 @@ from lsst.ip.diffim.subtractImages import AlardLuptonSubtractTask, AlardLuptonSu
 from lsst.ip.diffim import detectAndMeasure
 #from lsst.ip.diffim import DetectAndMeasureTask #?
 
-from lsst.ap.association import DiaPipelineTask, DiaPipelineConfig, TransformDiaSourceCatalogTask
+from lsst.ap.association import DiaPipelineTask, DiaPipelineConfig, TransformDiaSourceCatalogTask, AssociationTask
 
 from lsst.meas.base import DetectorVisitIdGeneratorConfig, \
     DiaObjectCalculationTask
@@ -83,7 +83,7 @@ def get_object(diaSourceCat, diffIm, band, preloadedDiaSources=DiaSource_empty, 
     #config.apdb.db_url = "sqlite:///file:apdb.db"
     config.apdb_config_url = "apdb_config.py"
     
-    task = DiaPipelineTask(config=config)
+    dia_pipeline_task = DiaPipelineTask(config=config)
 
 #    if diaObjects is None:
 #        print("diaObjects is None!")
@@ -95,7 +95,7 @@ def get_object(diaSourceCat, diffIm, band, preloadedDiaSources=DiaSource_empty, 
         #return struct.newDiaObjects
         
 #    else:
-    assocResults = task.associateDiaSources(diaSourceTable, solarSystemObjectTable, diffIm, diaObjects)
+    assocResults = dia_pipeline_task.associateDiaSources(diaSourceTable, solarSystemObjectTable, diffIm, diaObjects)
     #print(assocResults)
     #print(len(assocResults))
     #print(dir(assocResults))
@@ -116,7 +116,7 @@ def get_object(diaSourceCat, diffIm, band, preloadedDiaSources=DiaSource_empty, 
 #        preloadedDiaSources_new.set_index("diaObjectId", inplace=True)
 #        print(preloadedDiaSources_new)
         
-    mergedDiaSourceHistory, mergedDiaObjects, updatedDiaObjectIds = task.mergeAssociatedCatalogs(
+    mergedDiaSourceHistory, mergedDiaObjects, updatedDiaObjectIds = dia_pipeline_task.mergeAssociatedCatalogs(
             preloadedDiaSources, associatedDiaSources, 
             #assocResults.associatedDiaSources,
             diaObjects, newDiaObjects, 
@@ -127,9 +127,11 @@ def get_object(diaSourceCat, diffIm, band, preloadedDiaSources=DiaSource_empty, 
     print("\nmergedDiaObjects: ", mergedDiaObjects)
     
     #return mergedDiaObjects
+
+    
     # https://pipelines.lsst.io/py-api/lsst.meas.base.DiaObjectCalculationTask.html#lsst.meas.base.DiaObjectCalculationTask.run
-    task = DiaObjectCalculationTask()
-    diaCalResult = task.run(
+    dia_object_calculation_task = DiaObjectCalculationTask()
+    diaCalResult = dia_object_calculation_task.run(
             mergedDiaObjects,
             mergedDiaSourceHistory,
             updatedDiaObjectIds,
@@ -137,6 +139,24 @@ def get_object(diaSourceCat, diffIm, band, preloadedDiaSources=DiaSource_empty, 
 
     print("\ndiaCalResult: ", diaCalResult)
 
-    # The last one is optional (not stored in apdb)
-    return diaCalResult.updatedDiaObjects, associatedDiaSources, diaCalResult.diaObjectCat
+    # Q: diaCalResult.diaObjectCat == mergedDiaObjects? 
+    # No, the latter has not been fully updated
+
+    # preloaded sources should include both {merged history: associated sources + old/preload} and {new src, i.e. unassociated}
+    association_task = AssociationTask()
+    struct = association_task.run(diaSourceTable, diaObjects)
+    matchedDiaSources = struct.matchedDiaSources
+    unAssocDiaSources = struct.unAssocDiaSources
+    nUpdatedDiaObjects = struct.nUpdatedDiaObjects
+    nUnassociatedDiaObjects = struct.nUnassociatedDiaObjects
+
     
+    allDiaSources = dia_pipeline_task.mergeCatalogs(mergedDiaSourceHistory, unAssocDiaSources, "allDiaSources")
+    
+    allDiaSources.set_index(
+                ["diaObjectId", "band", "diaSourceId"],
+                inplace=True,
+                drop=False)
+    
+    
+    return diaCalResult.updatedDiaObjects, associatedDiaSources, diaCalResult.diaObjectCat, mergedDiaSourceHistory, allDiaSources
