@@ -4,5 +4,6 @@ Developed on the Rubin Science Platform (DM v28.0.1).
 
 Test the code by running
 
-`bash run.sh`
-
+"""
+bash run.sh
+"""
