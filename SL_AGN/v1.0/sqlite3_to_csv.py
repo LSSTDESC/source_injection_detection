@@ -1,7 +1,8 @@
 # Convert a sqlite3 database file to a csv table
 # We only select one table from the sqlite3 file
-# Note we can also do it through SQL command line or directly bash: 
-# Section 7.6. Export to CSV in https://www.sqlite.org/cli.html and below
+# Note we can also do it through SQL command line
+# Section 7.6. Export to CSV in https://www.sqlite.org/cli.html 
+# https://pipelines.lsst.io/getting-started/dc2-guide.html
 
 
 
