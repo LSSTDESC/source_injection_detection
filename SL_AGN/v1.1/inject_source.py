@@ -20,7 +20,7 @@ MAG_LIST = [
 ]
 
 #----------------------------
-newline("Start!")
+newline("Start injection!")
 
 print("SYSTEM_INDEX: ", SYSTEM_INDEX)
 print("TIME_INDEX_LIST: ", TIME_INDEX_LIST)
@@ -105,4 +105,4 @@ sources = load_pickle("sources")
 
 
 #============================
-newline("End!")
+newline("End injection!")

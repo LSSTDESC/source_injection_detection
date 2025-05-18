@@ -1,5 +1,5 @@
 from lib.tools import *
-from lib.imdiff import *
+from lib.dia import *
 
 
 #============================
@@ -32,7 +32,7 @@ print(mergedDiaSourceHistory.index.names)
 
 
 #----------------------------
-newline("get_object2")
+#newline("get_object2")
 # preloadedDiaSources=mergedDiaSourceHistory?
 
 # This gives a RuntimeError: Duplicate DiaSources found after association and merging with history. 
