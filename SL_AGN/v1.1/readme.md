@@ -6,6 +6,6 @@ Test the code by running
 
 `bash run.sh`
 
-######
+###
 Consider two exposures. 
 
