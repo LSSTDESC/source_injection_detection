@@ -12,7 +12,7 @@ TIME_INDEX_LIST = [
 
 
 #----------------------------
-newline("Start!")
+#newline("Start!")
 
 print("SYSTEM_INDEX: ", SYSTEM_INDEX)
 print("TIME_INDEX_LIST: ", TIME_INDEX_LIST)
@@ -46,4 +46,4 @@ add_wcs(filename)
 
 
 #============================
-newline("End!")
+#newline("End!")
