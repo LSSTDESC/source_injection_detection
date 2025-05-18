@@ -9,17 +9,17 @@ setup lsst_distrib
 [ ! -d "catalog" ] && mkdir -p "catalog"
 [ ! -d "fig" ] && mkdir -p "fig"
 
-#python set_stamp.py
+python set_stamp.py
 
-#python inject_source.py
+python inject_source.py
 
-#python diffim_detect.py
+python diffim_detect.py
 
-#python check_completeness.py
+python check_completeness.py
 
-#apdb-cli create-sql "sqlite:///apdb.db" apdb_config.py
-#python sqlite3_to_csv.py apdb.db DiaObject DiaObject_empty.csv
-#python sqlite3_to_csv.py apdb.db DiaSource DiaSource_empty.csv
+apdb-cli create-sql "sqlite:///apdb.db" apdb_config.py
+python sqlite3_to_csv.py apdb.db DiaObject DiaObject_empty.csv
+python sqlite3_to_csv.py apdb.db DiaSource DiaSource_empty.csv
 python associate.py
 
 #============================
