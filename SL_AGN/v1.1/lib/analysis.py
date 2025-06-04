@@ -11,6 +11,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator
+from matplotlib.ticker import ScalarFormatter
 
 
 #======================================
@@ -232,7 +233,7 @@ def plot_tolerance_completeness(inj_catalog, diaSources,
 #    return data[~np.isnan(data).any(axis=1)]
 
 
-def plot_corner(B, x_col, y_col, bins=20, save_dir="fig_corner/"):
+def plot_corner(B, x_col, y_col, bins=20, save_dir=FIG_FOLDER):
 
     matched = B[B["RB"] == True]
     unmatched = B[B["RB"] == False]
@@ -251,9 +252,10 @@ def plot_corner(B, x_col, y_col, bins=20, save_dir="fig_corner/"):
     y_min -= y_inv * 0.1
     y_max += y_inv * 0.1
     
-    fig, ax = plt.subplots(nrows=2, ncols=2, figsize=(3.5, 3.5),
+    fig, ax = plt.subplots(nrows=2, ncols=2, figsize=(5, 5),
                            gridspec_kw={'width_ratios': [1, 0.2], 
                                     'height_ratios': [0.2, 1]},
+                           layout="constrained",
                            #sharex=True, sharey=True
                           )
 
@@ -272,8 +274,8 @@ def plot_corner(B, x_col, y_col, bins=20, save_dir="fig_corner/"):
     #fig.colorbar(hb[3], ax=ax[1, 0])
 
 # Histograms of x on top (top-left)
-    ax[0, 0].hist(matched[x_col], bins=x_bin_edges, color='b', alpha=0.7, label='True', log=True)
-    ax[0, 0].hist(unmatched[x_col], bins=x_bin_edges, color='r', alpha=0.7, label='False', log=True)
+    ax[0, 0].hist(matched[x_col], bins=x_bin_edges, color='b', alpha=0.7, label='True')#, log=True)
+    ax[0, 0].hist(unmatched[x_col], bins=x_bin_edges, color='r', alpha=0.7, label='False')#, log=True)
     #ax[0, 0].set_ylabel('Frequency')
     #ax[0, 0].legend()
     ax[0, 0].set_xlim(x_min, x_max)
@@ -281,8 +283,8 @@ def plot_corner(B, x_col, y_col, bins=20, save_dir="fig_corner/"):
     
 
 # Histograms of y on the right (right-top)
-    ax[1, 1].hist(matched[y_col], bins=y_bin_edges, color='b', alpha=0.7, label='True', orientation='horizontal', log=True, )
-    ax[1, 1].hist(unmatched[y_col], bins=y_bin_edges, color='r', alpha=0.7, label='False', orientation='horizontal', log=True, )
+    ax[1, 1].hist(matched[y_col], bins=y_bin_edges, color='b', alpha=0.7, label='True', orientation='horizontal')#, log=True, )
+    ax[1, 1].hist(unmatched[y_col], bins=y_bin_edges, color='r', alpha=0.7, label='False', orientation='horizontal')#, log=True, )
     #ax[1, 1].set_xlabel('Frequency')
     #ax[1, 1].legend()
     ax[1, 1].set_ylim(y_min, y_max)
@@ -311,7 +313,7 @@ def plot_corner(B, x_col, y_col, bins=20, save_dir="fig_corner/"):
     #print(dir(ax[1, 0]))
     #ax[1, 0].yaxis.set_label_text(ax[1, 0].get_ylabel() + " " + offset)
 
-    filename = f"{save_dir}{x_col}_{y_col}.png"
+    filename = f"{save_dir}/{x_col}_{y_col}.png"
 
     # Adjust layout and save figure
     #plt.tight_layout()
