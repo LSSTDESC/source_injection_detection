@@ -13,6 +13,12 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator
 from matplotlib.ticker import ScalarFormatter
 
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+
+import pandas as pd
+
 
 #======================================
 def match_radec(table_A, table_B, 
@@ -326,4 +332,36 @@ def plot_corner(B, x_col, y_col, bins=20, save_dir=FIG_FOLDER):
 
     
 #======================================        
-#def random_forest():
+def random_forest(diaSources_mark, col_list):
+    
+
+    diaSources_mark_s = diaSources_mark[col_list]
+    diaSources_mark_s_arr = np.array(diaSources_mark_s.to_pandas().values, dtype=np.float32)
+
+    # X and y for input values and flags
+    X = diaSources_mark_s_arr[:,:-1]
+    y = diaSources_mark_s_arr[:,-1]
+
+    print(X[:3], y[:3])
+
+    #------------------------
+    # Divide the sample into training and test datasets
+    X_train, X_test, y_train, y_test = \
+                    train_test_split(X, y, 
+                                     test_size=0.2, 
+                                     random_state=42)
+
+    #------------------------
+    # Training
+    rf_classifier = RandomForestClassifier(n_estimators=100, random_state=42)
+    rf_classifier.fit(X_train, y_train)
+
+    #------------------------
+    #Predict
+    y_pred = rf_classifier.predict(X_test)
+
+    accuracy = accuracy_score(y_test, y_pred)
+
+    print(f"Accuracy: {accuracy:.2f}")
+
+    return 0

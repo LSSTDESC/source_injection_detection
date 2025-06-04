@@ -72,3 +72,16 @@ plot_corner(diaSources_mark,
 # matched and unmatched should have clear separation
 # DS tests for example
 # Or RF?
+
+newline("random_forest")
+
+col_list = [
+'coord_raErr',
+'coord_decErr',
+'base_SdssCentroid_xErr', 
+'base_SdssCentroid_yErr',
+"RB",
+]
+
+random_forest(diaSources_mark, col_list)
+
