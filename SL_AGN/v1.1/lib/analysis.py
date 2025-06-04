@@ -342,7 +342,8 @@ def random_forest(diaSources_mark, col_list):
     X = diaSources_mark_s_arr[:,:-1]
     y = diaSources_mark_s_arr[:,-1]
 
-    print(X[:3], y[:3])
+    print("X[:3]: \n", X[:3])
+    print("y[:3]: \n", y[:3])
 
     #------------------------
     # Divide the sample into training and test datasets
