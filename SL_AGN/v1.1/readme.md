@@ -7,5 +7,6 @@ Test the code by running
 `bash run.sh`
 
 ###
-Consider two exposures. 
+Add corner plots, random forest.
+Consider two exposures (not yet, maybe v1.2). 
 
