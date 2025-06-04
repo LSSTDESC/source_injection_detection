@@ -115,7 +115,7 @@ def check_completeness(method,
 
     else: 
         print("ATT: wrong method or bad unit!")
-        return None, None, None
+        return None, None
 
 
     cover_rate = np.sum(matched_A) * 1. / len(table_A)
@@ -156,13 +156,14 @@ def plot_tolerance_completeness(inj_catalog, diaSources,
         title = "%s_xy"%diaSrc_tag
     
         for tol in tolerance_pix: 
-            print("tol: ", tol)
-            completeness = check_completeness(method, 
-                                              inj_catalog, diaSources, 
-                                              'x', 'y', 
-                                              x_col, y_col, 
-                                              tol,
-                                             )
+            #print("tol: ", tol)
+            completeness, _ = check_completeness(method, 
+                                                 inj_catalog, diaSources, 
+                                                 'x', 'y', 
+                                                 x_col, y_col, 
+                                                 tol,
+                                                 )
+            #print("completeness: ", completeness)
             
             completeness_list.append(completeness)
             
@@ -172,14 +173,14 @@ def plot_tolerance_completeness(inj_catalog, diaSources,
         title = "coord_radec"
 
         for tol in tolerance_pix: 
-            print("tol: ", tol)
-            completeness = check_completeness(method, 
-                                              inj_catalog, diaSources, 
-                                              "ra", "dec", 
-                                              ra_col, dec_col, 
-                                              "deg", unit, 
-                                              tol/ARCSEC2PIX,
-                                             )
+            #print("tol: ", tol)
+            completeness, _ = check_completeness(method, 
+                                                 inj_catalog, diaSources, 
+                                                 "ra", "dec", 
+                                                 ra_col, dec_col, 
+                                                 "deg", unit, 
+                                                 tol/ARCSEC2PIX,
+                                                 )
 
             completeness_list.append(completeness)
             
@@ -201,7 +202,8 @@ def plot_tolerance_completeness(inj_catalog, diaSources,
     
     #----------------------------------
     fig, ax = plt.subplots(1,1)
-    
+
+    #print("tolerance_pix, completeness_list: \n", tolerance_pix, completeness_list)
     ax.plot(tolerance_pix, completeness_list, 'o')
     
     ax.axhline(0.5, ls=':', c='grey')
@@ -226,6 +228,100 @@ def plot_tolerance_completeness(inj_catalog, diaSources,
 
 
 #======================================
+#def remove_nans(data):
+#    return data[~np.isnan(data).any(axis=1)]
+
+
+def plot_corner(B, x_col, y_col, bins=20, save_dir="fig_corner/"):
+
+    matched = B[B["RB"] == True]
+    unmatched = B[B["RB"] == False]
+
+    x_min = min(np.nanmin(matched[x_col]), np.nanmin(unmatched[x_col]))
+    x_max = max(np.nanmax(matched[x_col]), np.nanmax(unmatched[x_col]))
+    x_bin_edges = np.linspace(x_min, x_max, bins + 1)
+    x_inv = x_max - x_min
+    x_min -= x_inv * 0.1
+    x_max += x_inv * 0.1
+    
+    y_min = min(np.nanmin(matched[y_col]), np.nanmin(unmatched[y_col]))
+    y_max = max(np.nanmax(matched[y_col]), np.nanmax(unmatched[y_col]))
+    y_bin_edges = np.linspace(y_min, y_max, bins + 1)
+    y_inv = y_max - y_min
+    y_min -= y_inv * 0.1
+    y_max += y_inv * 0.1
+    
+    fig, ax = plt.subplots(nrows=2, ncols=2, figsize=(3.5, 3.5),
+                           gridspec_kw={'width_ratios': [1, 0.2], 
+                                    'height_ratios': [0.2, 1]},
+                           #sharex=True, sharey=True
+                          )
+
+    
+# Scatter plot in the main axes (bottom-left)
+    ax[1, 0].scatter(matched[x_col], matched[y_col], color='b', label='True', alpha=0.2, marker='^')
+    ax[1, 0].scatter(unmatched[x_col], unmatched[y_col], color='r', label='False', alpha=0.2)
+    ax[1, 0].set_xlabel(x_col)
+    ax[1, 0].set_ylabel(y_col)
+    ax[1, 0].set_xlim(x_min, x_max)
+    ax[1, 0].set_ylim(y_min, y_max)
+    ax[1, 0].legend()
+
+# 2D histogram in the main axes (bottom-left)
+    #hb = ax[1, 0].hist2d(data['x'], data['y'], bins=30, cmap='Blues', alpha=0.5)
+    #fig.colorbar(hb[3], ax=ax[1, 0])
+
+# Histograms of x on top (top-left)
+    ax[0, 0].hist(matched[x_col], bins=x_bin_edges, color='b', alpha=0.7, label='True', log=True)
+    ax[0, 0].hist(unmatched[x_col], bins=x_bin_edges, color='r', alpha=0.7, label='False', log=True)
+    #ax[0, 0].set_ylabel('Frequency')
+    #ax[0, 0].legend()
+    ax[0, 0].set_xlim(x_min, x_max)
+    ax[0, 0].set_xticks([])
+    
+
+# Histograms of y on the right (right-top)
+    ax[1, 1].hist(matched[y_col], bins=y_bin_edges, color='b', alpha=0.7, label='True', orientation='horizontal', log=True, )
+    ax[1, 1].hist(unmatched[y_col], bins=y_bin_edges, color='r', alpha=0.7, label='False', orientation='horizontal', log=True, )
+    #ax[1, 1].set_xlabel('Frequency')
+    #ax[1, 1].legend()
+    ax[1, 1].set_ylim(y_min, y_max)
+    ax[1, 1].set_yticks([])
+
+    ax[0, 1].axis('off')
+# Adjust layout to make room for the top and right histograms
+    #plt.tight_layout()
+    #plt.show()
+
+    formatter = ScalarFormatter()
+    formatter.set_scientific(True)
+    formatter.set_powerlimits((-3, 3))  # Control the threshold for using scientific notation
+
+    # Apply the formatter to both x and y axes
+    ax[1, 0].xaxis.set_major_formatter(formatter)
+    ax[1, 0].yaxis.set_major_formatter(formatter)
+
+    #print(ax[1, 0].get_yticklabels())
+
+    #ax[1, 0].yaxis.offsetText.set_visible(False)
+    #print(ax[1, 0].yaxis.offsetText.get_text())
+    #offset = ax[1, 0].yaxis.get_major_formatter().get_offset()
+
+    #print(ax[1, 0].yaxis.offsetText)
+    #print(dir(ax[1, 0]))
+    #ax[1, 0].yaxis.set_label_text(ax[1, 0].get_ylabel() + " " + offset)
+
+    filename = f"{save_dir}{x_col}_{y_col}.png"
+
+    # Adjust layout and save figure
+    #plt.tight_layout()
+    #fig.subplots_adjust(wspace=0.05, hspace=0.05)
+    plt.savefig(filename) #, dpi=300)
+    
+
+    return 0
+
+
     
 #======================================        
 #def random_forest():
