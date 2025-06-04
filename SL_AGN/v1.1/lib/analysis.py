@@ -250,6 +250,8 @@ def plot_corner(B, x_col, y_col, bins=20, save_dir=FIG_FOLDER):
     x_inv = x_max - x_min
     x_min -= x_inv * 0.1
     x_max += x_inv * 0.1
+    if np.isnan(x_min) or np.isnan(x_max):
+        return 1
     
     y_min = min(np.nanmin(matched[y_col]), np.nanmin(unmatched[y_col]))
     y_max = max(np.nanmax(matched[y_col]), np.nanmax(unmatched[y_col]))
@@ -257,6 +259,8 @@ def plot_corner(B, x_col, y_col, bins=20, save_dir=FIG_FOLDER):
     y_inv = y_max - y_min
     y_min -= y_inv * 0.1
     y_max += y_inv * 0.1
+    if np.isnan(y_min) or np.isnan(y_max):
+        return 1
     
     fig, ax = plt.subplots(nrows=2, ncols=2, figsize=(5, 5),
                            gridspec_kw={'width_ratios': [1, 0.2], 
