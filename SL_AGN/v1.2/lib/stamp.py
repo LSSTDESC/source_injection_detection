@@ -2,6 +2,9 @@ import h5py
 import pandas as pd
 import numpy as np
 from scipy.ndimage import gaussian_filter
+import lsst.afw.math as afwMath
+import lsst.afw.geom as afwGeom
+import lsst.geom as geom
 import os
 from astropy.table import Table
 from astropy.io import fits
@@ -244,3 +247,17 @@ def add_wcs(filename):
     fits.writeto("%s_wcs.fits"%tag, data, hdr_new, overwrite=True)
     
     return 0
+
+def rotate_exposure(exp, n_degrees):
+    n_degrees = n_degrees % 360
+
+    wcs = exp.getWcs()
+
+    warper = afwMath.Warper('lanczos4')
+
+    affine_rot_transform = geom.AffineTransform.makeRotation(n_degrees*geom.degrees)
+    transform_p2top2 = afwGeom.makeTransform(affine_rot_transform)
+    rotated_wcs = afwGeom.makeModifiedWcs(transform_p2top2, wcs, False)
+
+    rotated_exp = warper.warpExposure(rotated_wcs, exp)
+    return rotated_exp
