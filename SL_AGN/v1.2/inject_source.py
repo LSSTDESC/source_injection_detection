@@ -76,6 +76,11 @@ save_pickle("template", template)
 template = load_pickle("template")
 
 #----------------------------
+newline("plot_and_save_image")
+tag = "template_test"
+plot_save_image(template, tag)
+
+#----------------------------
 inj_catalog_template = inj_catalog_calexp.copy()
 inj_catalog_template["stamp"] = [COADD_STAMP_FILENAME] * len(inj_catalog_template)
 
