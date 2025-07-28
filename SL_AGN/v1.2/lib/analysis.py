@@ -208,7 +208,7 @@ def plot_tolerance_completeness(inj_catalog, diaSources,
 
     
     #----------------------------------
-    fig, ax = plt.subplots(1,1)
+    fig, ax = plt.subplots(1,1,layout="constrained",figsize=(4,3))
 
     #print("tolerance_pix, completeness_list: \n", tolerance_pix, completeness_list)
     ax.plot(tolerance_pix, completeness_list, 'o')
@@ -262,7 +262,7 @@ def plot_corner(B, x_col, y_col, bins=20, save_dir=FIG_FOLDER):
     if np.isnan(y_min) or np.isnan(y_max):
         return 1
     
-    fig, ax = plt.subplots(nrows=2, ncols=2, figsize=(5, 5),
+    fig, ax = plt.subplots(nrows=2, ncols=2, figsize=(4, 4),
                            gridspec_kw={'width_ratios': [1, 0.2], 
                                     'height_ratios': [0.2, 1]},
                            layout="constrained",
@@ -290,6 +290,9 @@ def plot_corner(B, x_col, y_col, bins=20, save_dir=FIG_FOLDER):
     #ax[0, 0].legend()
     ax[0, 0].set_xlim(x_min, x_max)
     ax[0, 0].set_xticks([])
+    ax[0, 0].axvline(np.median(matched[x_col]), ls=':', c='b')
+    ax[0, 0].axvline(np.median(unmatched[x_col]), ls=':', c='r')
+    print("line: ", np.median(matched[x_col]), np.median(unmatched[x_col]), )
     
 
 # Histograms of y on the right (right-top)
@@ -299,6 +302,9 @@ def plot_corner(B, x_col, y_col, bins=20, save_dir=FIG_FOLDER):
     #ax[1, 1].legend()
     ax[1, 1].set_ylim(y_min, y_max)
     ax[1, 1].set_yticks([])
+    ax[1, 1].axhline(np.median(matched[y_col]), ls=':', c='b')
+    ax[1, 1].axhline(np.median(unmatched[y_col]), ls=':', c='r')
+    print("line: ", np.median(matched[y_col]), np.median(unmatched[y_col]), )
 
     ax[0, 1].axis('off')
 # Adjust layout to make room for the top and right histograms
@@ -329,6 +335,7 @@ def plot_corner(B, x_col, y_col, bins=20, save_dir=FIG_FOLDER):
     #plt.tight_layout()
     #fig.subplots_adjust(wspace=0.05, hspace=0.05)
     plt.savefig(filename) #, dpi=300)
+    print("savefig: ", filename)
     
 
     return 0
