@@ -165,7 +165,7 @@ def plot_save_two_images(image1, image2, tag1, tag2, method="lsp"):
 
 def plot_save_three_images(image1, image2, image3, tag1, tag2, tag3, method="lsp", xlim=None, ylim=None):
     
-    fig, axs = plt.subplots(1, 3, figsize=(14, 4))
+    fig, axs = plt.subplots(1, 3, figsize=(15, 4), layout="constrained")
 
     if method=="lsp":
         display_lsp(image1, fig, axs[0])

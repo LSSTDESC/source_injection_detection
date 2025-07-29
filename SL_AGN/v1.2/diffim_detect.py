@@ -140,7 +140,7 @@ difference_image = load_pickle("difference_image")
 
 #----------------------------
 #newline("plot_save_three_images")
-#plot_save_three_images(injected_template, injected_calexp, difference_image, "injected_template", "injected_calexp", "diffim")
+plot_save_three_images(injected_template, injected_calexp, difference_image, "injected_template", "injected_calexp", "diffim")
 
 
 #============================
