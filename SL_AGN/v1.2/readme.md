@@ -16,3 +16,5 @@ Inspired by RSP tutorials on synthetic source injection built by Jeff Carlin and
 [DP0: 14_Injecting_Synthetic_Sources](https://github.com/lsst/tutorial-notebooks/blob/main/DP0.2/14_Injecting_Synthetic_Sources.ipynb)
 
 [DP1: 105_4_Synthetic_Source_Injection](https://github.com/lsst/tutorial-notebooks/blob/main/DP1/100_How_to_Use_RSP_Tools/105_Image_reprocessing/105_4_Synthetic_Source_Injection.ipynb)
+
+`lens_data.h5` stores the simulated lens systems provided by Padma.
