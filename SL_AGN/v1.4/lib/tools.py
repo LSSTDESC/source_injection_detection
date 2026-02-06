@@ -27,7 +27,7 @@ def newline(prompt=""):
     print('-'*20)
 
 
-def save_pickle(tag, item， folder):
+def save_pickle(tag, item, folder):
     filename = "%s/%s.pkl"%(folder, tag) 
     with open(filename, "wb") as f:
         pickle.dump(item, f)

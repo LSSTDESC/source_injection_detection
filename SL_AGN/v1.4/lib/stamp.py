@@ -36,16 +36,24 @@ def get_single_stamp(system_index, time_index, folder):
         system_image = h5f[system_tag]["images"][time_index]
 
     #----------------------------------
+    hdu = fits.PrimaryHDU(system_image)
+    
     total_flux = np.sum(system_image)
     total_mag = flux2mag(total_flux, MAG0)
     print("total_flux: ", total_flux)
     print("total_mag: ", total_mag)
+
+    hdu.header["total_flux"] = total_flux
+    hdu.header["total_mag"] = total_mag
 
     #----------------------------------
     lens_mag = system_metadata[b"deflector_light_magnitude"][0]
     lens_flux = mag2flux(lens_mag, MAG0)
     print("lens_flux: ", lens_flux)
     print("lens_mag: ", lens_mag)
+
+    hdu.header["lens_flux"] = lens_flux
+    hdu.header["lens_mag"] = lens_mag
 
     #----------------------------------
     source_number = len(system_lc)    
@@ -55,14 +63,20 @@ def get_single_stamp(system_index, time_index, folder):
         source_mag = system_lc[source_index]
         source_flux = mag2flux(source_mag, MAG0)
         source_flux_list.append(source_flux)
-        print("source_flux: ", source_flux)
-        print("source_mag: ", source_mag)
+        print("source_flux_%d: "%source_index, source_flux)
+        print("source_mag_%d: "%source_index, source_mag)
+
+        hdu.header["source_flux_%d"%source_index] = source_flux
+        hdu.header["source_mag_%d"%source_index] = source_mag
     
     #----------------------------------
     arc_flux = total_flux - lens_flux - np.sum(source_flux_list)
     arc_mag = flux2mag(arc_flux, MAG0)
     print("arc_flux: ", arc_flux)
     print("arc_mag: ", arc_mag)
+
+    hdu.header["arc_flux"] = arc_flux
+    hdu.header["arc_mag"] = arc_mag
     
     #----------------------------------
     plt.figure()
@@ -74,7 +88,9 @@ def get_single_stamp(system_index, time_index, folder):
     plt.close()
     
     #----------------------------------
-    fits.writeto("%s/%s.fits"%(folder, image_tag), system_image, overwrite=True)
+    #fits.writeto("%s/%s.fits"%(folder, image_tag), system_image, overwrite=True)
+
+    hdu.writeto("%s/%s.fits"%(folder, image_tag), overwrite=True)
     
     #----------------------------------
     
@@ -93,11 +109,16 @@ def get_coadd_stamp(system_index, folder):
     #----------------------------------
     mean_image = np.mean(system_image, axis=0)
 
+    hdu = fits.PrimaryHDU(mean_image)
+
     #----------------------------------
     total_flux = np.sum(mean_image)
     total_mag = flux2mag(total_flux, MAG0)
     print("total_flux: ", total_flux)
     print("total_mag: ", total_mag)
+
+    hdu.header["total_flux"] = total_flux
+    hdu.header["total_mag"] = total_mag
 
     #----------------------------------
     plt.figure()
@@ -108,7 +129,9 @@ def get_coadd_stamp(system_index, folder):
     plt.close()
     
     #----------------------------------
-    fits.writeto("%s/%s.fits"%(folder, image_tag), mean_image, overwrite=True)
+    #fits.writeto("%s/%s.fits"%(folder, image_tag), mean_image, overwrite=True)
+
+    hdu.writeto("%s/%s.fits"%(folder, image_tag), overwrite=True)
     
     return mean_image
 
