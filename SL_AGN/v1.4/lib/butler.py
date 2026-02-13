@@ -3,61 +3,46 @@ from lsst.daf.butler import Butler
 
 
 #============================
-BUTLER_CONFIG = "dp02"
-COLLECTIONS = "2.2i/runs/DP0.2"
-TRACT = 3828
-DETECTOR = 19
-BAND = 'i'
-VISIT_INDEX = 5
+BUTLER_CONFIG = "dp1"
+COLLECTIONS = "LSSTComCam/DP1"
 BUTLER = Butler(BUTLER_CONFIG, collections=COLLECTIONS) 
 
 
 #============================
-def get_calexp_dataId(butler=BUTLER, tract=TRACT, detector=DETECTOR, band=BAND, visit_index=VISIT_INDEX):
+def get_visit_dataset_refs(ra, dec, band, butler=BUTLER):
 
-    where = "instrument='LSSTCam-imSim' "
-    where += "AND skymap='DC2' "
-    where += "AND tract=%d "%tract
-    where += "AND detector=%d "%detector
-    where += "AND band='%s'"%band
-    print("Query: ", where)
+    dataset_refs = butler.query_datasets("visit_image",
+                                     where="band.name = :band AND \
+                                     visit_detector_region.region OVERLAPS POINT(:ra, :dec)",
+                                     bind={"band": band,
+                                           "ra": ra, "dec": dec},
+                                     order_by=["visit.timespan.begin"])
     
-    calexp_DatasetRefs = sorted(list(set(butler.registry.queryDatasets("calexp", where=where))))
-    #print("calexp_DatasetRefs: ", calexp_DatasetRefs)  # very long strings
+    return dataset_refs
 
-    # some random visit
-    dataId = calexp_DatasetRefs[visit_index].dataId
-    #print("calexp_DatasetRefs[%d]: "%VISIT_INDEX, calexp_DatasetRefs[VISIT_INDEX])
-    print("dataId: ", dataId)
-    print("Type: ", type(dataId) )
+
+def get_visit_image(dataset_refs, visit_index, butler=BUTLER): 
     
-    return dataId
+    ref = dataset_refs[visit_index]
+    visit_image = butler.get(ref)
+
+    return visit_image
 
 
-def get_calexp(calexp_dataId, butler=BUTLER): 
+def get_template_dataset_refs(ra, dec, band, butler=BUTLER): 
+
+    query = f"band.name = '{band}' AND patch.region OVERLAPS POINT({ra}, {dec})"
+    dataset_refs = butler.query_datasets("template_coadd", where=query)
+
+    return dataset_refs
+
+
+def get_template_image(dataset_refs, template_index, butler=BUTLER):
     
-    calexp = butler.get("calexp", dataId=calexp_dataId)
+    ref = dataset_refs[template_index]
+    template_image = butler.get(ref)
 
-    return calexp
-
-
-def get_src(calexp_dataId, butler=BUTLER): 
-
-    # get sources
-    src = butler.get("src", dataId=calexp_dataId)
-    
-    return src
-
-def get_template(calexp_dataId, butler=BUTLER): 
-
-    # Getting templates/coadds corresponding to the calexp (overlap)
-    template = butler.get("goodSeeingDiff_templateExp", dataId=calexp_dataId.required)
-    #template = butler.get("deepDiff_templateExp", dataId=calexp_dataId.required)
-    
-    #template = butler.get("goodSeeingDiff_matchedExp", calexp_dataId) 
-
-    return template
-
+    return template_image
 
 
 

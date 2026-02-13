@@ -1,19 +1,22 @@
+import os
 import h5py
 import pandas as pd
 import numpy as np
 from scipy.ndimage import gaussian_filter
-import lsst.afw.math as afwMath
-import lsst.afw.geom as afwGeom
-import lsst.geom as geom
-import os
 from astropy.table import Table
 from astropy.io import fits
 from astropy.wcs import WCS
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from lib.tools import *
+
+import lsst.afw.math as afwMath
+import lsst.afw.geom as afwGeom
 import lsst.afw.image as afwImage
+import lsst.geom as geom
+
+import lib.tools as tl
+
 
 #============================
 MAG0 = 28.17
@@ -39,7 +42,7 @@ def get_single_stamp(system_index, time_index, folder):
     hdu = fits.PrimaryHDU(system_image)
     
     total_flux = np.sum(system_image)
-    total_mag = flux2mag(total_flux, MAG0)
+    total_mag = tl.flux2mag(total_flux, MAG0)
     print("total_flux: ", total_flux)
     print("total_mag: ", total_mag)
 
@@ -48,7 +51,7 @@ def get_single_stamp(system_index, time_index, folder):
 
     #----------------------------------
     lens_mag = system_metadata[b"deflector_light_magnitude"][0]
-    lens_flux = mag2flux(lens_mag, MAG0)
+    lens_flux = tl.mag2flux(lens_mag, MAG0)
     print("lens_flux: ", lens_flux)
     print("lens_mag: ", lens_mag)
 
@@ -61,7 +64,7 @@ def get_single_stamp(system_index, time_index, folder):
 
     for source_index in range(source_number):
         source_mag = system_lc[source_index]
-        source_flux = mag2flux(source_mag, MAG0)
+        source_flux = tl.mag2flux(source_mag, MAG0)
         source_flux_list.append(source_flux)
         print("source_flux_%d: "%source_index, source_flux)
         print("source_mag_%d: "%source_index, source_mag)
@@ -71,7 +74,7 @@ def get_single_stamp(system_index, time_index, folder):
     
     #----------------------------------
     arc_flux = total_flux - lens_flux - np.sum(source_flux_list)
-    arc_mag = flux2mag(arc_flux, MAG0)
+    arc_mag = tl.flux2mag(arc_flux, MAG0)
     print("arc_flux: ", arc_flux)
     print("arc_mag: ", arc_mag)
 
@@ -113,7 +116,7 @@ def get_coadd_stamp(system_index, folder):
 
     #----------------------------------
     total_flux = np.sum(mean_image)
-    total_mag = flux2mag(total_flux, MAG0)
+    total_mag = tl.flux2mag(total_flux, MAG0)
     print("total_flux: ", total_flux)
     print("total_mag: ", total_mag)
 
@@ -222,7 +225,7 @@ def check_flux_diff(system_index):
     with h5py.File(LENS_FILENAME, 'r') as h5f:
         system_lc = h5f[system_tag]["light_curve"][:, :]
 
-    system_lc_flux = mag2flux(system_lc, MAG0)
+    system_lc_flux = tl.mag2flux(system_lc, MAG0)
     
     mean_flux = np.mean(system_lc_flux, axis=1)
     #print("mean_flux: ", mean_flux )
@@ -272,7 +275,9 @@ def add_wcs(filename):
     
     return 0
 
+    
 def rotate_exposure(exp, n_degrees):
+    
     n_degrees = n_degrees % 360
 
     wcs = exp.getWcs()
@@ -284,13 +289,22 @@ def rotate_exposure(exp, n_degrees):
     rotated_wcs = afwGeom.makeModifiedWcs(transform_p2top2, wcs, False)
 
     rotated_exp = warper.warpExposure(rotated_wcs, exp)
+    
     return rotated_exp
 
-def make_rotated_stamp(visit, stamp_filename):
-    add_wcs(stamp_filename)
-    wcs_stamp_filename = "%s_wcs.fits"%stamp_filename[:-5]
+
+def make_rotated_stamp(rotation_angle, wcs_stamp_filename):
+    
+    #add_wcs(stamp_filename)
+    #wcs_stamp_filename = "%s_wcs.fits"%stamp_filename[:-5]
+    
     stamp_img_orig = afwImage.ExposureF.readFits(wcs_stamp_filename)
-    stamp_img_rotated = rotate_exposure(stamp_img_orig, -1*visit.visitInfo.getBoresightRotAngle().asDegrees())
+    
+    stamp_img_rotated = rotate_exposure(stamp_img_orig, rotation_angle)
+    
     stamp_img_rotated.image.array[np.where(np.isnan(stamp_img_rotated.image.array))] = 0.0
-    rot_stamp_filename = wcs_stamp_filename[:4]+'rotated_'+wcs_stamp_filename[4:]
-    stamp_img_rotated.writeFits(rot_stamp_filename)
+    
+    stamp_rot_filename = wcs_stamp_filename.replace(".fits", "_rot.fits")
+    stamp_img_rotated.writeFits(stamp_rot_filename)
+    
+    return 0

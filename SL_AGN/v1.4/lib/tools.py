@@ -44,3 +44,9 @@ def load_pickle(tag):
 
 
 #======================================
+def get_visit_rotation_angle(visit): 
+    
+    rotation_angle0 = visit.visitInfo.getBoresightRotAngle()
+    rotation_angle = -rotation_angle0.asDegrees()
+    
+    return rotation_angle
