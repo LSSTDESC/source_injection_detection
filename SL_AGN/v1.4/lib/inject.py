@@ -1,4 +1,4 @@
-from lib.tools import *
+import lib.tools as tl
 
 import numpy as np
 import matplotlib
@@ -12,151 +12,135 @@ from lsst.source.injection import CoaddInjectConfig, CoaddInjectTask
 
 
 #======================================
-SIZE_PIX = 4000
+#SIZE_PIX = 4000
+STAMP_WIDTH_PIX = 33
+STAMP_WIDTH_ARCSEC = STAMP_WIDTH_PIX / tl.ARCSEC2PIX
 
 
 #======================================
-def make_grid_coord(wcs, mag, stamp_filename, edge=200, step=500): 
+def make_grid(ra_cen, dec_cen, width_arcmin, num_side):
 
-    x = np.arange(edge, SIZE_PIX, step)
-    y = np.arange(edge, SIZE_PIX, step)
-    X, Y = np.meshgrid(x,y)
+    gap_arcsec = (width_arcmin * 60. - STAMP_WIDTH_ARCSEC) / (num_side - 1) - STAMP_WIDTH_ARCSEC
+    
+    #test_side_length = (stamp_width_pix + gap_pix) * (num_side - 1) + stamp_width_pix
+    
+    #gap_pix = gap_arcsec * tl.ARCSEC2PIX
+    
+    #if gap_pix < (0.5 * stamp_width_pix):
+    
+    if gap_arcsec < 6.0:
+        print("ATT: Injection grid too tight!!")
+        return None, None
+    
+    # We use plane sky approximation since it is a small region
+    # But note angular length on RA needs a factor of cos(DEC)
 
-    n_inj = np.shape(X)[0] * np.shape(X)[1]
+    ra_start = ra_cen - width_arcmin / 60. / 2 / np.cos(np.deg2rad(dec_center)) + 0.5 * STAMP_WIDTH_ARCSEC
+    ra_end = ra_cen + width_arcmin / 60. / 2 / np.cos(np.deg2rad(dec_center)) - 0.5 * STAMP_WIDTH_ARCSEC
 
-    x_list = X.flatten()
-    y_list = Y.flatten()
-  
+    dec_start = dec_cen - width_arcmin / 60. / 2 + 0.5 * STAMP_WIDTH_ARCSEC
+    dec_end = dec_cen + width_arcmin / 60. / 2 - 0.5 * STAMP_WIDTH_ARCSEC
+
+    ra_arr = np.linspace(ra_start, ra_end, num_side)
+    dec_arr = np.linspace(dec_start, dec_end, num_side)
+
+    RA_grid, DEC_grid = np.meshgrid(ra_arr, dec_arr)
+
+    RA_arr = RA_grid.flatten()
+    DEC_arr = DEC_grid.flatten()
+
     #----------------------------------
-    ra_list = []
-    dec_list = []
+    inj_radec = Table(
+        {
+            "ra": RA_arr,
+            "dec": DEC_arr,
+        }
+    )
+    inj_radec.write("%s/inj_radec.fits"%tl.FIG_FOLDER, overwrite=True)
+    
+    #----------------------------------
+    fig, axs = plt.subplots(1, 1, figsize=(4, 4), layout="constrained")
+    axs.scatter(RA_arr, DEC_arr)
+    axs.set_xlabel("RA [deg]")
+    axs.set_ylabel("DEC [deg]")
+    axs.invert_xaxis()
+    plt.savefig("%s/inj_radec.png"%tl.FIG_FOLDER)
 
-    for i in range(len(x_list)):
-        x = x_list[i]
-        y = y_list[i]
+    #----------------------------------
 
-        tmp = wcs.pixelToSky(x, y)
-        ra = tmp[0].asDegrees()
-        dec = tmp[1].asDegrees()
+    return RA_arr, DEC_arr
 
-        ra_list.append(ra)
-        dec_list.append(dec)
 
+def make_inj_catalog(wcs, stamp_mag, stamp_filename, RA_arr, DEC_arr, tag):
+
+    x_arr, y_arr = wcs.skyToPixelArray(RA_arr, DEC_arr, degrees=True)
+
+    n_inj = len(RA_arr)
     inj_catalog = Table(
         {
             "injection_id": range(n_inj),
-            "ra": ra_list,
-            "dec": dec_list,
+            "ra": RA_arr,
+            "dec": DEC_arr,
             "source_type": ["Stamp"] * n_inj,
-            "mag": [mag] * n_inj,
+            "mag": [stamp_mag] * n_inj,
             "stamp": [stamp_filename] * n_inj,
-            "x": x_list,
-            "y": y_list,
+            "x": x_arr,
+            "y": y_arr,
         }
     )
 
-    # May save the catalog to a file
-    inj_catalog.write("%s/inj_catalog.fits"%CATALOG_FOLDER, 
+    #----------------------------------
+    inj_catalog.write("%s/inj_catalog_%s.fits"%(tl.FIG_FOLDER, tag), 
                       overwrite=True)
     
     #----------------------------------
-    fig, axs = plt.subplots(1,2,figsize=(8.5,4),layout="tight")
-    axs[0].scatter(x_list, y_list)
-    axs[0].set_xlabel("X [pix]")
-    axs[0].set_ylabel("Y [pix]")
-    axs[1].scatter(ra_list, dec_list)
-    axs[1].set_xlabel("RA [deg]")
-    axs[1].set_ylabel("DEC [deg]")
-    axs[1].invert_xaxis()
-    plt.savefig("%s/inj_coord.png"%FIG_FOLDER)
+    fig, axs = plt.subplots(1, 1, figsize=(4, 4),layout="constrained")
+    
+    axs.scatter(x_arr, y_arr)
+    
+    # Draw a line pointing north
+    ra_cen = np.median(RA_arr)
+    dec_cen = np.median(DEC_arr)
+    dec_north = dec_cen + 0.5 / 60
+    x_line_arr, y_line_arr = wcs.skyToPixelArray(np.array([ra_cen, ra_cen]),
+                                                 np.array([dec_cen, dec_north]),
+                                                 degrees=True)
+    axs.annotate("", 
+                 xytext=(x_line_arr[0], y_line_arr[0]), 
+                 xy=(x_line_arr[1], y_line_arr[1]), 
+                 arrowprops=dict(arrowstyle="->", color='red', linewidth=2))
+    
+    axs.set_xlabel("X [pix]")
+    axs.set_ylabel("Y [pix]")
+
+    plt.savefig("%s/inj_xy_%s.png"%(tl.FIG_FOLDER, tag) )
 
     #----------------------------------
 
     return inj_catalog 
 
-#======================================
-def make_coadd_grid_coord(coadd, mag, stamp_filename, edge=200, step=500): 
-    bbox = coadd.getBBox()
-    wcs = coadd.getWcs()
+
+def make_inj_catalog_visit(visit_wcs, stamp_mag, stamp_filename, RA_arr, DEC_arr, visit_tag):
+
+    wcs = visit_wcs
+    tag = "visit_%s"%visit_tag
+    inj_catalog_visit = make_inj_catalog(wcs, stamp_mag, stamp_filename, RA_arr, DEC_arr, tag)
     
-    x = np.arange(bbox.getMinX()+edge, bbox.getMaxX(), step)
-    y = np.arange(bbox.getMinY()+edge, bbox.getMaxY(), step)
-    X, Y = np.meshgrid(x,y)
-
-    n_inj = np.shape(X)[0] * np.shape(X)[1]
-
-    x_list = X.flatten()
-    y_list = Y.flatten()
-  
-    #----------------------------------
-    ra_list = []
-    dec_list = []
-
-    for i in range(len(x_list)):
-        x = x_list[i]
-        y = y_list[i]
-
-        tmp = wcs.pixelToSky(x, y)
-        ra = tmp[0].asDegrees()
-        dec = tmp[1].asDegrees()
-
-        ra_list.append(ra)
-        dec_list.append(dec)
-
-    inj_catalog = Table(
-        {
-            "injection_id": range(n_inj),
-            "ra": ra_list,
-            "dec": dec_list,
-            "source_type": ["Stamp"] * n_inj,
-            "mag": [mag] * n_inj,
-            "stamp": [stamp_filename] * n_inj,
-            "x": x_list,
-            "y": y_list,
-        }
-    )
-
-    # May save the catalog to a file
-    inj_catalog.write("%s/inj_catalog.fits"%CATALOG_FOLDER, 
-                      overwrite=True)
+    return inj_catalog_visit
     
-    #----------------------------------
-    fig, axs = plt.subplots(1,2,figsize=(8.5,4),layout="tight")
-    axs[0].scatter(x_list, y_list)
-    axs[0].set_xlabel("X [pix]")
-    axs[0].set_ylabel("Y [pix]")
-    axs[1].scatter(ra_list, dec_list)
-    axs[1].set_xlabel("RA [deg]")
-    axs[1].set_ylabel("DEC [deg]")
-    axs[1].invert_xaxis()
-    plt.savefig("%s/inj_coord.png"%FIG_FOLDER)
 
-    #----------------------------------
-    return inj_catalog
+def make_inj_catalog_template(template_wcs, stamp_mag, stamp_filename, RA_arr, DEC_arr, template_tag):
+
+    wcs = template_wcs
+    tag = "template_%s"%visit_tag
+    inj_catalog_visit = make_inj_catalog(wcs, stamp_mag, stamp_filename, RA_arr, DEC_arr, tag)
+    
+    return inj_catalog_template
+    
 
 
 #======================================
-def calexp_inject_stamp(calexp, inj_catalog):
 
-    psf = calexp.getPsf()
-    photo_calib = calexp.getPhotoCalib()
-    wcs = calexp.getWcs()
-
-    inject_config = VisitInjectConfig()
-    inject_task = VisitInjectTask(config=inject_config)
-
-    injected_output = inject_task.run(
-        injection_catalogs=inj_catalog,
-        input_exposure=calexp.clone(),
-        psf=psf,
-        photo_calib=photo_calib,
-        wcs=wcs,
-    )
-    injected_exposure = injected_output.output_exposure
-
-    return injected_exposure
-
-#--------------------------------------
 def visit_inject_stamp(visit, inj_catalog):
 
     psf = visit.getPsf()
@@ -176,6 +160,7 @@ def visit_inject_stamp(visit, inj_catalog):
     injected_exposure = injected_output.output_exposure
 
     return injected_exposure
+
 
 #--------------------------------------
 def template_inject_stamp(template, inj_catalog):
@@ -199,29 +184,3 @@ def template_inject_stamp(template, inj_catalog):
     return injected_exposure
 
 #-------------------
-# If you want to generate a catalog of stars, simply specify source_type = 'star' and provide magnitude
-'''
-def get_visit_catalogs(num_visits, num_sources=10, source_type, ra=37.93, dec=6.93, extension=0.03, mag_list=[10], mag_min=10, mag_max=15, filename="", n=[2],q=[0.9], beta=[31.0], hlr=[5.0]):
-    source_list = []
-    for i in range(num_sources):
-            source_list.append((np.random.uniform(ra-extension, ra+extension), np.random.uniform(dec-extension, dec+extension), np.random.uniform(10,15, size=num_visits)))
-    inj_catalogs = []
-    for i in range(num_visits):
-        inj_catalogs.append(Table())
-    if(source_type.lower() == 'star' or source_type.lower() == 'sersic'):
-        for time in range(num_times):
-            for source in range(num_sources):
-                inj_catalogs[time] = vstack([inj_catalogs[time], Table(
-                    {'injection_id': [source],
-                        'ra': [source_list[source][0]],
-                        'dec': [source_list[source][1]],
-                        'source_type': ['Star'],
-                        'mag': [source_list[source][2][time]],
-                        'n': n,
-                        'q': q,
-                        'beta': beta,
-                        'half_light_radius': hlr,
-                    }
-                )])
-
-                '''
