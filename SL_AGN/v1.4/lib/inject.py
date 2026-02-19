@@ -35,11 +35,11 @@ def make_grid(ra_cen, dec_cen, width_arcmin, num_side):
     # We use plane sky approximation since it is a small region
     # But note angular length on RA needs a factor of cos(DEC)
 
-    ra_start = ra_cen - width_arcmin / 60. / 2 / np.cos(np.deg2rad(dec_center)) + 0.5 * STAMP_WIDTH_ARCSEC
-    ra_end = ra_cen + width_arcmin / 60. / 2 / np.cos(np.deg2rad(dec_center)) - 0.5 * STAMP_WIDTH_ARCSEC
+    ra_start = ra_cen - width_arcmin / 60. / 2 / np.cos(np.deg2rad(dec_cen)) + 0.5 * STAMP_WIDTH_ARCSEC / 3600.
+    ra_end = ra_cen + width_arcmin / 60. / 2 / np.cos(np.deg2rad(dec_cen)) - 0.5 * STAMP_WIDTH_ARCSEC / 3600.
 
-    dec_start = dec_cen - width_arcmin / 60. / 2 + 0.5 * STAMP_WIDTH_ARCSEC
-    dec_end = dec_cen + width_arcmin / 60. / 2 - 0.5 * STAMP_WIDTH_ARCSEC
+    dec_start = dec_cen - width_arcmin / 60. / 2 + 0.5 * STAMP_WIDTH_ARCSEC / 3600.
+    dec_end = dec_cen + width_arcmin / 60. / 2 - 0.5 * STAMP_WIDTH_ARCSEC / 3600.
 
     ra_arr = np.linspace(ra_start, ra_end, num_side)
     dec_arr = np.linspace(dec_start, dec_end, num_side)
@@ -84,8 +84,8 @@ def make_inj_catalog(wcs, stamp_mag, stamp_filename, RA_arr, DEC_arr, tag):
             "source_type": ["Stamp"] * n_inj,
             "mag": [stamp_mag] * n_inj,
             "stamp": [stamp_filename] * n_inj,
-            "x": x_arr,
-            "y": y_arr,
+            #"x": x_arr,
+            #"y": y_arr,
         }
     )
 
@@ -101,7 +101,8 @@ def make_inj_catalog(wcs, stamp_mag, stamp_filename, RA_arr, DEC_arr, tag):
     # Draw a line pointing north
     ra_cen = np.median(RA_arr)
     dec_cen = np.median(DEC_arr)
-    dec_north = dec_cen + 0.5 / 60
+    arrow_len_deg = 0.2 / 60
+    dec_north = dec_cen + arrow_len_deg
     x_line_arr, y_line_arr = wcs.skyToPixelArray(np.array([ra_cen, ra_cen]),
                                                  np.array([dec_cen, dec_north]),
                                                  degrees=True)
@@ -117,70 +118,77 @@ def make_inj_catalog(wcs, stamp_mag, stamp_filename, RA_arr, DEC_arr, tag):
 
     #----------------------------------
 
-    return inj_catalog 
+    return inj_catalog, x_arr, y_arr 
 
 
-def make_inj_catalog_visit(visit_wcs, stamp_mag, stamp_filename, RA_arr, DEC_arr, visit_tag):
+def make_inj_catalog_visit(visit_image, stamp_mag, stamp_filename, RA_arr, DEC_arr):
 
-    wcs = visit_wcs
+    wcs = visit_image.getWcs()
+
+    md_dict = visit_image.metadata.toDict()
+    visit = md_dict["LSST BUTLER DATAID VISIT"]
+
+    visit_tag = "%d"%visit
     tag = "visit_%s"%visit_tag
     inj_catalog_visit = make_inj_catalog(wcs, stamp_mag, stamp_filename, RA_arr, DEC_arr, tag)
     
     return inj_catalog_visit
     
 
-def make_inj_catalog_template(template_wcs, stamp_mag, stamp_filename, RA_arr, DEC_arr, template_tag):
+def make_inj_catalog_template(template_image, stamp_mag, stamp_filename, RA_arr, DEC_arr):
 
-    wcs = template_wcs
-    tag = "template_%s"%visit_tag
-    inj_catalog_visit = make_inj_catalog(wcs, stamp_mag, stamp_filename, RA_arr, DEC_arr, tag)
+    wcs = template_image.getWcs()
+    
+    md_dict = template_image.getMetadata().toDict()
+    tract = md_dict["LSST BUTLER DATAID TRACT"]
+    patch = md_dict["LSST BUTLER DATAID PATCH"]
+    
+    template_tag = "%d_%d"%(tract, patch)
+    tag = "template_%s"%template_tag
+    inj_catalog_template = make_inj_catalog(wcs, stamp_mag, stamp_filename, RA_arr, DEC_arr, tag)
     
     return inj_catalog_template
     
 
 
 #======================================
+def image_inject_stamp(image, inj_catalog, image_type=None):
 
-def visit_inject_stamp(visit, inj_catalog):
+    if image_type=="visit":
+        inject_config = VisitInjectConfig()
+        inject_task = VisitInjectTask(config=inject_config)
+    elif image_type=="template":
+        inject_config = CoaddInjectConfig()
+        inject_task = CoaddInjectTask(config=inject_config)
+    else:
+        print("ATT: Wrong image_type!")
+        return None
 
-    psf = visit.getPsf()
-    photo_calib = visit.getPhotoCalib()
-    wcs = visit.getWcs()
-
-    inject_config = VisitInjectConfig()
-    inject_task = VisitInjectTask(config=inject_config)
-
+    psf = image.getPsf()
+    photo_calib = image.getPhotoCalib()
+    wcs = image.getWcs()
+    
     injected_output = inject_task.run(
         injection_catalogs=inj_catalog,
-        input_exposure=visit.clone(),
+        input_exposure=image.clone(),
         psf=psf,
         photo_calib=photo_calib,
         wcs=wcs,
     )
-    injected_exposure = injected_output.output_exposure
+    #print(injected_output.output_catalog)
+    #injected_exposure = injected_output.output_exposure
 
-    return injected_exposure
+    return injected_output.output_exposure, injected_output.output_catalog
+
+
+def visit_inject_stamp(visit_image, inj_catalog):
+
+    return image_inject_stamp(visit_image, inj_catalog, image_type="visit")
 
 
 #--------------------------------------
-def template_inject_stamp(template, inj_catalog):
+def template_inject_stamp(template_image, inj_catalog):
 
-    psf = template.getPsf()
-    photo_calib = template.getPhotoCalib()
-    wcs = template.getWcs()
-
-    inject_config = CoaddInjectConfig()
-    inject_task = CoaddInjectTask(config=inject_config)
-
-    injected_output = inject_task.run(
-        injection_catalogs=inj_catalog,
-        input_exposure=template.clone(),
-        psf=psf,
-        photo_calib=photo_calib,
-        wcs=wcs,
-    )
-    injected_exposure = injected_output.output_exposure
-
-    return injected_exposure
-
+    return image_inject_stamp(template_image, inj_catalog, image_type="template")
+    
 #-------------------
