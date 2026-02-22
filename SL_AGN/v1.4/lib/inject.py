@@ -127,8 +127,9 @@ def make_inj_catalog_visit(visit_image, stamp_mag, stamp_filename, RA_arr, DEC_a
 
     md_dict = visit_image.metadata.toDict()
     visit = md_dict["LSST BUTLER DATAID VISIT"]
+    detector = md_dict["LSST BUTLER DATAID DETECTOR"]
 
-    visit_tag = "%d"%visit
+    visit_tag = "%d_%d"%(visit, detector)
     tag = "visit_%s"%visit_tag
     inj_catalog_visit = make_inj_catalog(wcs, stamp_mag, stamp_filename, RA_arr, DEC_arr, tag)
     
@@ -142,8 +143,9 @@ def make_inj_catalog_template(template_image, stamp_mag, stamp_filename, RA_arr,
     md_dict = template_image.getMetadata().toDict()
     tract = md_dict["LSST BUTLER DATAID TRACT"]
     patch = md_dict["LSST BUTLER DATAID PATCH"]
+    band = md_dict["LSST BUTLER DATAID BAND"]
     
-    template_tag = "%d_%d"%(tract, patch)
+    template_tag = "%d_%d_%s"%(tract, patch, band)
     tag = "template_%s"%template_tag
     inj_catalog_template = make_inj_catalog(wcs, stamp_mag, stamp_filename, RA_arr, DEC_arr, tag)
     

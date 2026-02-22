@@ -12,19 +12,44 @@ afwDisplay.setDefaultBackend("matplotlib")
 
 
 #============================
+def display_afw(image, fig, ax, title=''):
+
+    plt.sca(ax)
+
+    display = afwDisplay.Display(frame=fig)
+    display.scale("asinh", "zscale")
+    display.image(image.image)
+    
+    plt.title(title)
+
+    return display
+
+
+def plot_two_images(image0, image1, title0, title1, tag):
+
+    fig, axs = plt.subplots(1, 2, figsize=(10, 5), layout="tight")
+
+    display_afw(image0, fig, axs[0], title0)
+    display_afw(image1, fig, axs[0], title1)
+    
+    plt.savefig('%s/%s.png'%(tl.FIG_FOLDER, tag) )
+    
+
 def plot_dual(image0, image_inj, x_arr, y_arr, image_type=None):
 
     if image_type=="visit":
         md_dict = image0.metadata.toDict()
         visit = md_dict["LSST BUTLER DATAID VISIT"]
-        visit_tag = "%d"%visit
+        detector = md_dict["LSST BUTLER DATAID DETECTOR"]
+        visit_tag = "%d_%d"%(visit, detector)
         tag = "visit_%s"%visit_tag
         
     elif image_type=="template":
         md_dict = image0.metadata.toDict()
         tract = md_dict["LSST BUTLER DATAID TRACT"]
         patch = md_dict["LSST BUTLER DATAID PATCH"]
-        template_tag = "%d_%d"%(tract, patch)
+        band = md_dict["LSST BUTLER DATAID BAND"]
+        template_tag = "%d_%d_%s"%(tract, patch, band)
         tag = "template_%s"%template_tag
         
     else:
@@ -62,21 +87,24 @@ def plot_dual(image0, image_inj, x_arr, y_arr, image_type=None):
     if ymax>ylim_max:
         ymax = xlim_max   
 
-    fig, ax = plt.subplots(1, 2, figsize=(10, 5), layout="tight")
+    plot_two_images(image0, image_inj, 
+                    "original", "injected", 
+                    f"dual_{tag}")
 
-    plt.sca(ax[0])
-    display1 = afwDisplay.Display(frame=fig)
-    display1.scale('asinh', 'zscale')
-    display1.image(image_inj.image[xmin:xmax,ymin:ymax])
-    plt.title('injected')
+#    fig, ax = plt.subplots(1, 2, figsize=(10, 5), layout="tight")
 
-    plt.sca(ax[1])
-    display2 = afwDisplay.Display(frame=fig)
-    display2.scale('asinh', 'zscale')
-    display2.image(image0.image[xmin:xmax,ymin:ymax])
-    plt.title('original')
+#    plt.sca(ax[0])
+#    display1 = afwDisplay.Display(frame=fig)
+#    display1.scale('asinh', 'zscale')
+#    display1.image(image_inj.image[xmin:xmax,ymin:ymax])
+#    plt.title('injected')
 
-    
-    plt.savefig('%s/dual_%s.png'%(tl.FIG_FOLDER, tag) )
+#    plt.sca(ax[1])
+#    display2 = afwDisplay.Display(frame=fig)
+#    display2.scale('asinh', 'zscale')
+#    display2.image(image0.image[xmin:xmax,ymin:ymax])
+#    plt.title('original')
+
+#    plt.savefig('%s/dual_%s.png'%(tl.FIG_FOLDER, tag) )
 
     return 0
