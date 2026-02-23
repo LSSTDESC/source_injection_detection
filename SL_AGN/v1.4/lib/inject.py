@@ -56,7 +56,7 @@ def make_grid(ra_cen, dec_cen, width_arcmin, num_side):
             "dec": DEC_arr,
         }
     )
-    inj_radec.write("%s/inj_radec.fits"%tl.FIG_FOLDER, overwrite=True)
+    inj_radec.write("%s/inj_radec.fits"%tl.CATALOG_FOLDER, overwrite=True)
     
     #----------------------------------
     fig, axs = plt.subplots(1, 1, figsize=(4, 4), layout="constrained")
@@ -68,11 +68,12 @@ def make_grid(ra_cen, dec_cen, width_arcmin, num_side):
 
     #----------------------------------
 
-    return RA_arr, DEC_arr
+    return inj_radec
 
 
-def make_inj_catalog(wcs, stamp_mag, stamp_filename, RA_arr, DEC_arr, tag):
+def make_inj_catalog(wcs, stamp_mag, stamp_filename, inj_radec, tag):
 
+    RA_arr, DEC_arr = inj_radec["ra"], inj_radec["dec"]
     x_arr, y_arr = wcs.skyToPixelArray(RA_arr, DEC_arr, degrees=True)
 
     n_inj = len(RA_arr)
@@ -90,7 +91,7 @@ def make_inj_catalog(wcs, stamp_mag, stamp_filename, RA_arr, DEC_arr, tag):
     )
 
     #----------------------------------
-    inj_catalog.write("%s/inj_catalog_%s.fits"%(tl.FIG_FOLDER, tag), 
+    inj_catalog.write("%s/inj_catalog_%s.fits"%(tl.CATALOG_FOLDER, tag), 
                       overwrite=True)
     
     #----------------------------------
@@ -121,7 +122,7 @@ def make_inj_catalog(wcs, stamp_mag, stamp_filename, RA_arr, DEC_arr, tag):
     return inj_catalog, x_arr, y_arr 
 
 
-def make_inj_catalog_visit(visit_image, stamp_mag, stamp_filename, RA_arr, DEC_arr):
+def make_inj_catalog_visit(visit_image, stamp_mag, stamp_filename, inj_radec):
 
     wcs = visit_image.getWcs()
 
@@ -131,12 +132,12 @@ def make_inj_catalog_visit(visit_image, stamp_mag, stamp_filename, RA_arr, DEC_a
 
     visit_tag = "%d_%d"%(visit, detector)
     tag = "visit_%s"%visit_tag
-    inj_catalog_visit = make_inj_catalog(wcs, stamp_mag, stamp_filename, RA_arr, DEC_arr, tag)
+    inj_catalog_visit = make_inj_catalog(wcs, stamp_mag, stamp_filename, inj_radec, tag)
     
     return inj_catalog_visit
     
 
-def make_inj_catalog_template(template_image, stamp_mag, stamp_filename, RA_arr, DEC_arr):
+def make_inj_catalog_template(template_image, stamp_mag, stamp_filename, inj_radec):
 
     wcs = template_image.getWcs()
     
@@ -147,7 +148,7 @@ def make_inj_catalog_template(template_image, stamp_mag, stamp_filename, RA_arr,
     
     template_tag = "%d_%d_%s"%(tract, patch, band)
     tag = "template_%s"%template_tag
-    inj_catalog_template = make_inj_catalog(wcs, stamp_mag, stamp_filename, RA_arr, DEC_arr, tag)
+    inj_catalog_template = make_inj_catalog(wcs, stamp_mag, stamp_filename, inj_radec, tag)
     
     return inj_catalog_template
     
