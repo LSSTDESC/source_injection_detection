@@ -1,0 +1,6 @@
+Following v1.4, here we add these things.
+
+- Vary the time points of the stamps.
+- Use different systems of the stamps.
+
+We will also refine some details of the code.
