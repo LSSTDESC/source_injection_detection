@@ -1,6 +1,6 @@
 from lsst.ip.diffim import subtractImages
 from lsst.ip.diffim import detectAndMeasure
-from lsst.ap.association import TransformDiaSourceCatalogTask
+from lsst.ap.association import TransformDiaSourceCatalogTask, TransformDiaSourceCatalogConfig
 from lsst.pipe.base import Struct
 
 import lsst.afw.geom
@@ -8,6 +8,9 @@ import lsst.meas.algorithms
 import lsst.afw.math
 
 import lib.tools as tl
+import lib.visual as vis
+
+from astropy.table import Table
 
 
 
@@ -64,9 +67,11 @@ def run_subtract_task(warped_template, visit_image, kernel=None):
 
 
 
-def get_kernel(kernel_filename):
+def read_kernel(kernel_filename):
     kernel = lsst.afw.math.LinearCombinationKernel.readFits(kernel_filename)
     return kernel
+
+    
 
 #=============================
 def warp_image(visit_image, template_image):
@@ -102,10 +107,66 @@ def detect_dia_sources(visit_image, warped_template, difference_image):
 
 def sourceCat2Tab(diaSourceCat, diffIm, band, reliability=None):
 
+    """
+        Following the test. 
+        https://github.com/lsst/ap_association/blob/main/tests/test_transformDiaSourceCatalog.py#L95
+    """
+
     initInputs = {}
     schema = diaSourceCat.getSchema()
+    
     initInputs['diaSourceSchema'] = Struct(schema=schema)
-    task = TransformDiaSourceCatalogTask(initInputs)
-    result = task.run(diaSourceCat, diffIm, band, reliability)
+    config = TransformDiaSourceCatalogConfig()
+    #config.doIncludeReliability = True
+    task = TransformDiaSourceCatalogTask(initInputs, config=config)
+    
+    result = task.run(diaSourceCat, diffIm, band) #, reliability)
     
     return result.diaSourceTable
+
+
+#============================
+def imdiff_detect(tract, patch, band, visit, detector, kernel=None):
+
+    if kernel is None:
+        prefix=''
+    else:
+        prefix='injected_'
+    
+    template_image_filename = f"{tl.FIG_FOLDER}/{prefix}template_{tract}_{patch}_{band}.fits"
+    template_image = lsst.afw.image._exposure.ExposureF.readFits(template_image_filename)
+
+    visit_image_filename = f"{tl.FIG_FOLDER}/{prefix}visit_{visit}_{detector}.fits"
+    visit_image = lsst.afw.image._exposure.ExposureF.readFits(visit_image_filename)
+
+    # Warp the template to match the visit image.
+    warped_template = warp_image(visit_image, template_image)
+
+    # Run image subtraction and save the kernel.
+    difference_image, kernel_new = run_subtract_task(warped_template, visit_image, kernel)
+
+    inj_radec = Table.read(f"{tl.CATALOG_FOLDER}/inj_catalog_visit_{visit}_{detector}.fits")
+    
+#    if prefix=='':
+#        tag = "original"
+#    elif prefix=='injected_':
+#        tag = "injected"
+#    else:
+#        print("ATT: Wrong image_type!")
+#        return 1
+
+    tag = f"{visit}_{detector}_{tract}_{patch}_{band}"
+    
+    vis.plot_triple(visit_image, warped_template, difference_image, inj_radec, f"{prefix}{tag}")
+
+    difference_image.writeFits(f"{tl.FIG_FOLDER}/{prefix}diff_image_{tag}.fits")
+
+    dia_sources = detect_dia_sources(visit_image, warped_template, difference_image)
+
+    dia_sources.writeFits(f"{tl.CATALOG_FOLDER}/{prefix}diaSources_{tag}.fits")
+
+    dia_sources_tab_df = sourceCat2Tab(dia_sources, difference_image, difference_image.getFilter())
+    dia_sources_tab_df.to_csv(f"{tl.CATALOG_FOLDER}/{prefix}diaSources_tab_{tag}.csv", index=False)
+    
+    
+    return kernel_new

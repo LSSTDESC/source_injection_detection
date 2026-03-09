@@ -21,7 +21,7 @@ STAMP_WIDTH_ARCSEC = STAMP_WIDTH_PIX / tl.ARCSEC2PIX
 def make_grid(ra_cen, dec_cen, width_arcmin, num_side):
 
     gap_arcsec = (width_arcmin * 60. - STAMP_WIDTH_ARCSEC) / (num_side - 1) - STAMP_WIDTH_ARCSEC
-    
+    print("gap_arcsec: ", gap_arcsec)
     #test_side_length = (stamp_width_pix + gap_pix) * (num_side - 1) + stamp_width_pix
     
     #gap_pix = gap_arcsec * tl.ARCSEC2PIX
@@ -35,8 +35,9 @@ def make_grid(ra_cen, dec_cen, width_arcmin, num_side):
     # We use plane sky approximation since it is a small region
     # But note angular length on RA needs a factor of cos(DEC)
 
-    ra_start = ra_cen - width_arcmin / 60. / 2 / np.cos(np.deg2rad(dec_cen)) + 0.5 * STAMP_WIDTH_ARCSEC / 3600.
-    ra_end = ra_cen + width_arcmin / 60. / 2 / np.cos(np.deg2rad(dec_cen)) - 0.5 * STAMP_WIDTH_ARCSEC / 3600.
+    scale_factor = np.cos(np.deg2rad(dec_cen))
+    ra_start = ra_cen - width_arcmin / 60. / 2 / scale_factor + 0.5 * STAMP_WIDTH_ARCSEC / 3600.
+    ra_end = ra_cen + width_arcmin / 60. / 2 / scale_factor - 0.5 * STAMP_WIDTH_ARCSEC / 3600.
 
     dec_start = dec_cen - width_arcmin / 60. / 2 + 0.5 * STAMP_WIDTH_ARCSEC / 3600.
     dec_end = dec_cen + width_arcmin / 60. / 2 - 0.5 * STAMP_WIDTH_ARCSEC / 3600.
@@ -45,6 +46,10 @@ def make_grid(ra_cen, dec_cen, width_arcmin, num_side):
     dec_arr = np.linspace(dec_start, dec_end, num_side)
 
     RA_grid, DEC_grid = np.meshgrid(ra_arr, dec_arr)
+
+    offset = 1. / 3600. 
+    RA_grid += np.random.uniform(-offset, offset, (num_side, num_side)) / scale_factor
+    DEC_grid += np.random.uniform(-offset, offset, (num_side, num_side))
 
     RA_arr = RA_grid.flatten()
     DEC_arr = DEC_grid.flatten()
@@ -56,22 +61,22 @@ def make_grid(ra_cen, dec_cen, width_arcmin, num_side):
             "dec": DEC_arr,
         }
     )
-    inj_radec.write("%s/inj_radec.fits"%tl.CATALOG_FOLDER, overwrite=True)
+    #inj_radec.write("%s/inj_radec.fits"%tl.CATALOG_FOLDER, overwrite=True)
     
     #----------------------------------
-    fig, axs = plt.subplots(1, 1, figsize=(4, 4), layout="constrained")
-    axs.scatter(RA_arr, DEC_arr)
-    axs.set_xlabel("RA [deg]")
-    axs.set_ylabel("DEC [deg]")
-    axs.invert_xaxis()
-    plt.savefig("%s/inj_radec.png"%tl.FIG_FOLDER)
+    #fig, axs = plt.subplots(1, 1, figsize=(4, 4), layout="constrained")
+    #axs.scatter(RA_arr, DEC_arr)
+    #axs.set_xlabel("RA [deg]")
+    #axs.set_ylabel("DEC [deg]")
+    #axs.invert_xaxis()
+    #plt.savefig("%s/inj_radec.png"%tl.FIG_FOLDER)
 
     #----------------------------------
 
     return inj_radec
 
 
-def make_inj_catalog(wcs, stamp_mag, stamp_filename, inj_radec, tag):
+def make_inj_catalog(wcs, stamp_mag_list, stamp_filename_list, inj_radec, tag):
 
     RA_arr, DEC_arr = inj_radec["ra"], inj_radec["dec"]
     x_arr, y_arr = wcs.skyToPixelArray(RA_arr, DEC_arr, degrees=True)
@@ -83,10 +88,10 @@ def make_inj_catalog(wcs, stamp_mag, stamp_filename, inj_radec, tag):
             "ra": RA_arr,
             "dec": DEC_arr,
             "source_type": ["Stamp"] * n_inj,
-            "mag": [stamp_mag] * n_inj,
-            "stamp": [stamp_filename] * n_inj,
-            #"x": x_arr,
-            #"y": y_arr,
+            "mag": stamp_mag_list,
+            "stamp": stamp_filename_list,
+            "x": x_arr,
+            "y": y_arr,
         }
     )
 
@@ -95,31 +100,36 @@ def make_inj_catalog(wcs, stamp_mag, stamp_filename, inj_radec, tag):
                       overwrite=True)
     
     #----------------------------------
-    fig, axs = plt.subplots(1, 1, figsize=(4, 4),layout="constrained")
+    fig, axs = plt.subplots(1, 2, figsize=(8.5, 4),layout="constrained")
     
-    axs.scatter(x_arr, y_arr)
+    axs[0].scatter(x_arr, y_arr, s=2.)
     
     # Draw a line pointing north
     ra_cen = np.median(RA_arr)
     dec_cen = np.median(DEC_arr)
-    arrow_len_deg = 0.2 / 60
+    arrow_len_deg = 1. / 60
     dec_north = dec_cen + arrow_len_deg
     x_line_arr, y_line_arr = wcs.skyToPixelArray(np.array([ra_cen, ra_cen]),
                                                  np.array([dec_cen, dec_north]),
                                                  degrees=True)
-    axs.annotate("", 
+    axs[0].annotate("", 
                  xytext=(x_line_arr[0], y_line_arr[0]), 
                  xy=(x_line_arr[1], y_line_arr[1]), 
                  arrowprops=dict(arrowstyle="->", color='red', linewidth=2))
     
-    axs.set_xlabel("X [pix]")
-    axs.set_ylabel("Y [pix]")
+    axs[0].set_xlabel("X [pix]")
+    axs[0].set_ylabel("Y [pix]")
 
-    plt.savefig("%s/inj_xy_%s.png"%(tl.FIG_FOLDER, tag) )
+    axs[1].scatter(RA_arr, DEC_arr, s=1.)
+    axs[1].set_xlabel("RA [deg]")
+    axs[1].set_ylabel("DEC [deg]")
+    axs[1].invert_xaxis()
+
+    plt.savefig("%s/inj_%s.png"%(tl.FIG_FOLDER, tag) )
 
     #----------------------------------
 
-    return inj_catalog, x_arr, y_arr 
+    return inj_catalog 
 
 
 def make_inj_catalog_visit(visit_image, stamp_mag, stamp_filename, inj_radec):

@@ -293,10 +293,7 @@ def rotate_exposure(exp, n_degrees):
     return rotated_exp
 
 
-def make_rotated_stamp(rotation_angle, wcs_stamp_filename):
-    
-    #add_wcs(stamp_filename)
-    #wcs_stamp_filename = "%s_wcs.fits"%stamp_filename[:-5]
+def make_rotated_stamp(rotation_angle, wcs_stamp_filename, rot_wcs_stamp_filename):
     
     stamp_img_orig = afwImage.ExposureF.readFits(wcs_stamp_filename)
     
@@ -304,7 +301,6 @@ def make_rotated_stamp(rotation_angle, wcs_stamp_filename):
     
     stamp_img_rotated.image.array[np.where(np.isnan(stamp_img_rotated.image.array))] = 0.0
     
-    stamp_rot_filename = wcs_stamp_filename.replace(".fits", "_rot.fits")
-    stamp_img_rotated.writeFits(stamp_rot_filename)
+    stamp_img_rotated.writeFits(rot_wcs_stamp_filename)
     
     return 0

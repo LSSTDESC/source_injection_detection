@@ -35,26 +35,26 @@ def plot_two_images(image0, image1, title0, title1, tag):
     plt.savefig('%s/%s.png'%(tl.FIG_FOLDER, tag) )
     
 
-def plot_dual(image0, image_inj, inj_radec, image_type=None):
+def plot_dual(image0, image_inj, inj_radec, tag):
 
-    if image_type=="visit":
-        md_dict = image0.metadata.toDict()
-        visit = md_dict["LSST BUTLER DATAID VISIT"]
-        detector = md_dict["LSST BUTLER DATAID DETECTOR"]
-        visit_tag = "%d_%d"%(visit, detector)
-        tag = "visit_%s"%visit_tag
+#    if image_type=="visit":
+#        md_dict = image0.metadata.toDict()
+#        visit = md_dict["LSST BUTLER DATAID VISIT"]
+#        detector = md_dict["LSST BUTLER DATAID DETECTOR"]
+#        visit_tag = "%d_%d"%(visit, detector)
+#        tag = "visit_%s"%visit_tag
         
-    elif image_type=="template":
-        md_dict = image0.metadata.toDict()
-        tract = md_dict["LSST BUTLER DATAID TRACT"]
-        patch = md_dict["LSST BUTLER DATAID PATCH"]
-        band = md_dict["LSST BUTLER DATAID BAND"]
-        template_tag = "%d_%d_%s"%(tract, patch, band)
-        tag = "template_%s"%template_tag
+#    elif image_type=="template":
+#        md_dict = image0.metadata.toDict()
+#        tract = md_dict["LSST BUTLER DATAID TRACT"]
+#        patch = md_dict["LSST BUTLER DATAID PATCH"]
+#        band = md_dict["LSST BUTLER DATAID BAND"]
+#        template_tag = "%d_%d_%s"%(tract, patch, band)
+#        tag = "template_%s"%template_tag
         
-    else:
-        print("ATT: Wrong image_type!")
-        return 1
+#    else:
+#        print("ATT: Wrong image_type!")
+#        return 1
 
     
     xlim_min, xlim_max, ylim_min, ylim_max = \
@@ -90,7 +90,7 @@ def plot_dual(image0, image_inj, inj_radec, image_type=None):
     if ymin<ylim_min:
         ymin = ylim_min
     if ymax>ylim_max:
-        ymax = xlim_max   
+        ymax = ylim_max
 
     plot_two_images(image0[xmin:xmax,ymin:ymax], 
                     image_inj[xmin:xmax,ymin:ymax], 
@@ -113,7 +113,7 @@ def plot_dual(image0, image_inj, inj_radec, image_type=None):
 
 #    plt.savefig('%s/dual_%s.png'%(tl.FIG_FOLDER, tag) )
 
-    return 0
+#    return 0
 
 
 def plot_three_images(image0, image1, image2, title0, title1, title2, tag):
@@ -128,15 +128,28 @@ def plot_three_images(image0, image1, image2, title0, title1, title2, tag):
 
 
 
-def plot_triple(image0, image1, image2, inj_radec, image_type=None):
+def plot_triple(image0, image1, image2, inj_radec, tag):
 
-    if image_type=="injected":
-        tag = "injected"
-    elif image_type=="original":
-        tag = "original"
-    else:
-        print("ATT: Wrong image_type!")
-        return 1
+#    md_dict = image0.metadata.toDict()
+#    visit = md_dict["LSST BUTLER DATAID VISIT"]
+#    detector = md_dict["LSST BUTLER DATAID DETECTOR"]
+#    visit_tag = "%d_%d"%(visit, detector)
+        
+#    md_dict = image1.metadata.toDict()
+#    tract = md_dict["LSST BUTLER DATAID TRACT"]
+#    patch = md_dict["LSST BUTLER DATAID PATCH"]
+#    band = md_dict["LSST BUTLER DATAID BAND"]
+#    template_tag = "%d_%d_%s"%(tract, patch, band)
+    
+#    if image_type=="injected":
+#        tag = "injected"
+#    elif image_type=="original":
+#        tag = "original"
+#    else:
+#        print("ATT: Wrong image_type!")
+#        return 1
+
+#    tag = f"{tag}_{visit_tag}_{template_tag}"
 
     xlim_min, xlim_max, ylim_min, ylim_max = \
         (
@@ -169,7 +182,7 @@ def plot_triple(image0, image1, image2, inj_radec, image_type=None):
     if ymin<ylim_min:
         ymin = ylim_min
     if ymax>ylim_max:
-        ymax = xlim_max   
+        ymax = ylim_max   
 
     plot_three_images(image0[xmin:xmax,ymin:ymax], 
                       image1[xmin:xmax,ymin:ymax], 
