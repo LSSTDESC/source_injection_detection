@@ -239,6 +239,7 @@ class DatasetGenerator:
                         if band == "y":
                             full_pop_df.drop(index=i, inplace=True)
                             quasar_lens_pop_copy.pop(i)
+        
         max_num_of_images_in_df = int(np.max(full_pop_df['num_ps_images']))
         mask = (np.array(full_pop_df[[f"micro_kappa_star_{i}" for i in range(max_num_of_images_in_df)]]) 
                 >= np.array(full_pop_df[[f"micro_kappa_tot_{i}" for i in range(max_num_of_images_in_df)]])).any(axis=1)
