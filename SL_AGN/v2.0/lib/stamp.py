@@ -1,19 +1,19 @@
+#import os
 import h5py
 #import pandas as pd
 import numpy as np
 #from scipy.ndimage import gaussian_filter
-import lsst.afw.math as afwMath
-import lsst.afw.geom as afwGeom
-import lsst.geom as geom
-#import os
 from astropy.table import Table
 from astropy.io import fits
 from astropy.wcs import WCS
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-#from lib.tools import *
+
+import lsst.afw.math as afwMath
+import lsst.afw.geom as afwGeom
 import lsst.afw.image as afwImage
+import lsst.geom as geom
 
 
 
@@ -30,9 +30,6 @@ MAG_ZPS_CPS = {
 
 
 LENS_FILENAME = "lens_finding_postage_stamps.h5"
-
-#----------------------------
-#band = 'i'
 
 #============================
 def flux2mag(flux, band, exposure_time=30.):
@@ -311,6 +308,7 @@ def add_wcs(filename):
 
     
 def rotate_exposure(exp, n_degrees):
+
     n_degrees = n_degrees % 360
 
     wcs = exp.getWcs()
@@ -322,14 +320,19 @@ def rotate_exposure(exp, n_degrees):
     rotated_wcs = afwGeom.makeModifiedWcs(transform_p2top2, wcs, False)
 
     rotated_exp = warper.warpExposure(rotated_wcs, exp)
+
     return rotated_exp
 
+
+def make_rotated_stamp(rotation_angle, wcs_stamp_filename, rot_wcs_stamp_filename):
     
-def make_rotated_stamp(visit, stamp_filename):
-    add_wcs(stamp_filename)
-    wcs_stamp_filename = "%s_wcs.fits"%stamp_filename[:-5]
     stamp_img_orig = afwImage.ExposureF.readFits(wcs_stamp_filename)
-    stamp_img_rotated = rotate_exposure(stamp_img_orig, -1*visit.visitInfo.getBoresightRotAngle().asDegrees())
+    
+    stamp_img_rotated = rotate_exposure(stamp_img_orig, rotation_angle)
+    
     stamp_img_rotated.image.array[np.where(np.isnan(stamp_img_rotated.image.array))] = 0.0
-    rot_stamp_filename = wcs_stamp_filename[:4]+'rotated_'+wcs_stamp_filename[4:]
-    stamp_img_rotated.writeFits(rot_stamp_filename)
+    
+    stamp_img_rotated.writeFits(rot_wcs_stamp_filename)
+    
+    return 0
+    

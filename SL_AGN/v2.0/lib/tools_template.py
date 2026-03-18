@@ -11,7 +11,7 @@ CATALOG_FOLDER = "catalog"
 PIX2ARCSEC = 0.2
 ARCSEC2PIX = 1./PIX2ARCSEC
 
-BAND = 'y' 
+BAND = BAND_INPUT 
 
 
 ##======================================
