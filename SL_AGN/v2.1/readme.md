@@ -10,3 +10,8 @@ And we delete the images after each run to save disk space (maybe keep cutouts o
 Just keep the catalog (FITS table).
 
 Note the orientation of the stamp only depends on the boresight angle of the visit. 
+
+
+---
+We first start from a small dataset -- 10x10 stamps on 10'x10'. Each stamp is an independent lens system.
+Then each visit corresponds to a time point (epoch) of the lens system.
