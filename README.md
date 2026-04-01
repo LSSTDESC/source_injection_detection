@@ -13,3 +13,5 @@ Organization is roughly one folder per science case.
 * `ANTARES` This folder stores the code for studying ANTARES alerts and ZTF data for lens systems and candidates.
 
 * `DP1` This folder stores the code for some basic analysis of the DP1 data.
+
+Note: the code for making broker filters, analyzing simulated DIA sources, analyzing clusters, is stored in `lantern` [here](https://github.com/drphilmarshall/lantern/tree/main).
