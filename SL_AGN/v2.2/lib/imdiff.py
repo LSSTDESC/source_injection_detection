@@ -13,6 +13,7 @@ import lib.visual as vis
 
 from astropy.table import Table
 from astropy.io import fits
+from astropy.wcs import WCS as astropyWCS
 import numpy as np
 
 
@@ -166,6 +167,10 @@ def save_cutouts_stacked(image, inj_radec, tag):
     half = tl.CUTOUT_SIZE // 2
     bbox = image.getBBox()
 
+    # Get parent WCS as astropy header, and parent xy0 for offset calculation
+    wcs_header = astropyWCS(image.getWcs().getFitsMetadata()).to_header()
+    image_xy0 = image.getXY0()
+
     hdus_image = [fits.PrimaryHDU()]
     hdus_variance = [fits.PrimaryHDU()]
     hdus_mask = [fits.PrimaryHDU()]
@@ -174,10 +179,19 @@ def save_cutouts_stacked(image, inj_radec, tag):
         xmin, xmax, ymin, ymax = _get_cutout_bounds(x_arr[i], y_arr[i], half, bbox)
         cutout = image[xmin:xmax, ymin:ymax]
 
+        xy0 = cutout.getXY0()
+
+        # Adjust CRPIX from parent image frame to cutout LOCAL frame
+        cutout_wcs_header = wcs_header.copy()
+        cutout_wcs_header['CRPIX1'] -= (xy0.getX() - image_xy0.getX())
+        cutout_wcs_header['CRPIX2'] -= (xy0.getY() - image_xy0.getY())
+
         header_kwargs = {
             'INJ_ID': (i, 'injection id'),
             'RA': (RA_arr[i], 'RA in degrees'),
             'DEC': (DEC_arr[i], 'DEC in degrees'),
+            'X0': (xy0.getX(), 'PARENT x origin (xy0)'),
+            'Y0': (xy0.getY(), 'PARENT y origin (xy0)'),
         }
 
         hdu_img = fits.ImageHDU(cutout.image.array, name=f"ID_{i:04d}")
@@ -185,6 +199,7 @@ def save_cutouts_stacked(image, inj_radec, tag):
         hdu_msk = fits.ImageHDU(cutout.mask.array, name=f"ID_{i:04d}")
 
         for hdu in [hdu_img, hdu_var, hdu_msk]:
+            hdu.header.update(cutout_wcs_header)
             for key, val in header_kwargs.items():
                 hdu.header[key] = val
 
