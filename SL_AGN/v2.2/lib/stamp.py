@@ -29,7 +29,22 @@ MAG_ZPS_CPS = {
 }
 
 
-LENS_FILENAME = "3000sqdeg_lsst_1y_sample_1.h5"
+LENS_FILENAMES = [
+    "3000sqdeg_lsst_1y_sample_1.h5",
+    "3000sqdeg_lsst_1y_sample_2.h5",
+]
+
+
+def get_lens_file_info():
+    """Return list of (filename, id_offset, n_systems) for each lens file."""
+    info = []
+    id_offset = 0
+    for filename in LENS_FILENAMES:
+        with h5py.File(filename, 'r') as hf:
+            n_systems = len(hf.keys())
+        info.append((filename, id_offset, n_systems))
+        id_offset += n_systems
+    return info
 
 #============================
 def flux2mag(flux, band, exposure_time=30.):
@@ -37,23 +52,28 @@ def flux2mag(flux, band, exposure_time=30.):
     return output
 
     
-def get_single_stamp(system_index, time_index, band, folder):
+def get_single_stamp(system_index, time_index, band, folder, lens_filename=None, id_offset=0):
+
+    if lens_filename is None:
+        lens_filename = LENS_FILENAMES[0]
+
+    hdf5_index = system_index - id_offset
 
     system_tag = f"system_{system_index}"
     image_tag = f"{system_tag}_{time_index}_{band}"
 
-    with h5py.File(LENS_FILENAME, 'r') as h5f:
-        
-#        system_metadata = pd.DataFrame(h5f[system_tag]["metadata"][:], 
+    with h5py.File(lens_filename, 'r') as h5f:
+
+#        system_metadata = pd.DataFrame(h5f[system_tag]["metadata"][:],
 #                                       columns=h5f["metadata_columns"][:])
 
         # At that time point
 #        system_lc = h5f[system_tag]["light_curve"][:, time_index]
 #        system_image = h5f[system_tag]["images"][time_index]
-        if len(h5f[f"lsst_lens_{system_index}"]['observation_dates'][band])>30:
+        if len(h5f[f"lsst_lens_{hdf5_index}"]['observation_dates'][band])>30:
             #print(f"{system_index} {band} obs too long!")
             return 1
-        stamps = h5f[f"lsst_lens_{system_index}"]["postage_stamps"][band]
+        stamps = h5f[f"lsst_lens_{hdf5_index}"]["postage_stamps"][band]
         stamp_image = stamps['all_observations'][time_index][:]
 
     #----------------------------------
@@ -119,15 +139,20 @@ def get_single_stamp(system_index, time_index, band, folder):
 
 
 #============================
-def get_coadd_stamp(system_index, band, folder):
+def get_coadd_stamp(system_index, band, folder, lens_filename=None, id_offset=0):
+
+    if lens_filename is None:
+        lens_filename = LENS_FILENAMES[0]
+
+    hdf5_index = system_index - id_offset
 
     system_tag = f"system_{system_index}"
     image_tag = f"{system_tag}_coadd_{band}"
 
-    with h5py.File(LENS_FILENAME, 'r') as h5f:
-        if len(h5f[f"lsst_lens_{system_index}"]['observation_dates'][band])>30:
+    with h5py.File(lens_filename, 'r') as h5f:
+        if len(h5f[f"lsst_lens_{hdf5_index}"]['observation_dates'][band])>30:
             return 1
-        stamps = h5f[f"lsst_lens_{system_index}"]["postage_stamps"][band]["all_observations"][:]
+        stamps = h5f[f"lsst_lens_{hdf5_index}"]["postage_stamps"][band]["all_observations"][:]
         
         #system_image = h5f[system_tag]["images"][:]
 
