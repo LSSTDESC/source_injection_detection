@@ -7,9 +7,24 @@ FIG_FOLDER = "fig"
 STAMP_FOLDER = "stamp"
 
 CATALOG_FOLDER = "catalog"
+CUTOUT_FOLDER = "cutout"
+
+#--------------------------------------
+CUTOUT_SIZE = 50
 
 PIX2ARCSEC = 0.2
 ARCSEC2PIX = 1./PIX2ARCSEC
+
+#--------------------------------------
+#https://community.lsst.org/t/adding-information-about-year-1-baseline-statistics-to-the-survey-strategy-website/11780/3
+BAND_EXPOSURE_TOTAL = {
+    'u':5,
+    'g':6,
+    'r':13,
+    'i':15,
+    'z':13,
+    'y':16,
+}
 
 BAND = BAND_INPUT
 VISIT_INDEX = VISIT_INDEX_INPUT
