@@ -152,6 +152,8 @@ def save_cutouts_individual(image, inj_radec, tag):
 
     for i in range(len(inj_radec)):
         xmin, xmax, ymin, ymax = _get_cutout_bounds(x_arr[i], y_arr[i], half, bbox)
+        #print("x, y, xmin, xmax, ymin, ymax: ", x_arr[i], y_arr[i], xmin, xmax, ymin, ymax)
+        if xmin>=xmax or ymin>=ymax: continue
         cutout = image[xmin:xmax, ymin:ymax]
         cutout.writeFits(f"{tl.CUTOUT_FOLDER}/{tag}_id{i}.fits")
 
@@ -177,6 +179,8 @@ def save_cutouts_stacked(image, inj_radec, tag):
 
     for i in range(len(inj_radec)):
         xmin, xmax, ymin, ymax = _get_cutout_bounds(x_arr[i], y_arr[i], half, bbox)
+        #print("x, y, xmin, xmax, ymin, ymax: ", x_arr[i], y_arr[i], xmin, xmax, ymin, ymax)
+        if xmin>=xmax or ymin>=ymax: continue
         cutout = image[xmin:xmax, ymin:ymax]
 
         xy0 = cutout.getXY0()

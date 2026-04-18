@@ -39,7 +39,10 @@ def get_n_observations(system_index, band, lens_filename, id_offset=0):
     """Return number of observation epochs, or None if system exceeds limit (>30)."""
     hdf5_index = system_index - id_offset
     with h5py.File(lens_filename, 'r') as hf:
-        n = len(hf[f"lsst_lens_{hdf5_index}"]['observation_dates'][band])
+        try:
+            n = len(hf[f"lsst_lens_{hdf5_index}"]['observation_dates'][band])
+        except:
+            return None
     return n if n <= 30 else None
 
 
@@ -194,12 +197,12 @@ def get_coadd_stamp(system_index, band, folder, lens_filename=None, id_offset=0)
     hdu.header["TOT_MAG"] = total_mag
 
     #----------------------------------
-    plt.figure()
-    plt.imshow(mean_image, norm='asinh', origin="lower")
-    plt.colorbar()
-    plt.tight_layout()
-    plt.savefig(f"{folder}/{image_tag}.png")
-    plt.close()
+#    plt.figure()
+#    plt.imshow(mean_image, norm='asinh', origin="lower")
+#    plt.colorbar()
+#    plt.tight_layout()
+#    plt.savefig(f"{folder}/{image_tag}.png")
+#    plt.close()
     
     #----------------------------------
     #fits.writeto("%s/%s.fits"%(folder, image_tag), mean_image, overwrite=True)
