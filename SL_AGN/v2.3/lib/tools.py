@@ -26,8 +26,7 @@ BAND_EXPOSURE_TOTAL = {
     'y': 16,
 }
 
-BAND = BAND_INPUT
-VISIT_INDEX = VISIT_INDEX_INPUT
+BAND = 'i'
 
 
 ##======================================
@@ -47,15 +46,15 @@ def newline(prompt=""):
 
 
 #def save_pickle(tag, item, folder):
-#    filename = "%s/%s.pkl"%(folder, tag) 
+#    filename = "%s/%s.pkl"%(folder, tag)
 #    with open(filename, "wb") as f:
 #        pickle.dump(item, f)
 #
 #    return 0
-#    
+#
 #
 #def load_pickle(tag, folder):
-#    filename = "%s/%s.pkl"%(folder, tag) 
+#    filename = "%s/%s.pkl"%(folder, tag)
 #    with open(filename, "rb") as f:
 #        item = pickle.load(f)
 #
@@ -63,9 +62,9 @@ def newline(prompt=""):
 #
 #
 #======================================
-def get_visit_rotation_angle(visit): 
-    
+def get_visit_rotation_angle(visit):
+
     rotation_angle0 = visit.visitInfo.getBoresightRotAngle()
     rotation_angle = rotation_angle0.asDegrees()
-    
+
     return rotation_angle

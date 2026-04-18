@@ -27,7 +27,6 @@ BAND_EXPOSURE_TOTAL = {
 }
 
 BAND = BAND_INPUT
-VISIT_INDEX = VISIT_INDEX_INPUT
 
 
 ##======================================
