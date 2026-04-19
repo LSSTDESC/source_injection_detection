@@ -27,7 +27,7 @@ BAND_EXPOSURE_TOTAL = {
 }
 
 BAND = 'i'
-
+LENS_INDEX_MIN = 0
 
 ##======================================
 #def mag2flux(mag, m0):

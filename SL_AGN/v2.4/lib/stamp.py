@@ -39,6 +39,7 @@ def get_n_observations(system_index, band, lens_filename, id_offset=0):
     hdf5_index = system_index - id_offset
     with h5py.File(lens_filename, 'r') as hf:
         try:
+            # Sometimes the data is missing
             n = len(hf[f"lsst_lens_{hdf5_index}"]['observation_dates'][band])
         except:
             return None
@@ -80,10 +81,16 @@ def get_single_stamp(system_index, time_index, band, folder, lens_filename=None,
         # At that time point
 #        system_lc = h5f[system_tag]["light_curve"][:, time_index]
 #        system_image = h5f[system_tag]["images"][time_index]
-        if len(h5f[f"lsst_lens_{hdf5_index}"]['observation_dates'][band])>30:
+        tot_obs_dates = len(h5f[f"lsst_lens_{hdf5_index}"]['observation_dates'][band])
+        if tot_obs_dates > 30:
             #print(f"{system_index} {band} obs too long!")
             return 1
         stamps = h5f[f"lsst_lens_{hdf5_index}"]["postage_stamps"][band]
+        tot_stamps = len(stamps['all_observations'])
+        if tot_stamps != tot_obs_dates:
+            #print(f"ATT: tot_stamps {tot_stamps} not equal to tot_obs_dates {tot_obs_dates} at system_index, time_index, band: {system_index}, {time_index}, {band}")
+            return 1
+            
         stamp_image = stamps['all_observations'][time_index][:]
 
     #----------------------------------
@@ -160,9 +167,14 @@ def get_coadd_stamp(system_index, band, folder, lens_filename=None, id_offset=0)
     image_tag = f"{system_tag}_coadd_{band}"
 
     with h5py.File(lens_filename, 'r') as h5f:
-        if len(h5f[f"lsst_lens_{hdf5_index}"]['observation_dates'][band])>30:
+        tot_obs_dates = len(h5f[f"lsst_lens_{hdf5_index}"]['observation_dates'][band])
+        if tot_obs_dates > 30:
             return 1
         stamps = h5f[f"lsst_lens_{hdf5_index}"]["postage_stamps"][band]["all_observations"][:]
+        tot_stamps = len(stamps)
+        if tot_stamps != tot_obs_dates:
+            #print(f"ATT: tot_stamps {tot_stamps} not equal to tot_obs_dates {tot_obs_dates} at system_index, time_index, band: {system_index}, {time_index}, {band}")
+            return 1
         
         #system_image = h5f[system_tag]["images"][:]
 
