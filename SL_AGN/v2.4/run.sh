@@ -5,6 +5,8 @@ band_index=3
 #----------------------------
 band="${band_arr[$band_index]}"
 visit_max="${len_arr[$band_index]}"
+echo "band: ${band}"
+echo "visit_max: ${visit_max}"
 
 #============================
 sed "s/BAND_INPUT/'${band}'/g" lib/tools_template.py > lib/tools.py
@@ -12,7 +14,8 @@ sed "s/BAND_INPUT/'${band}'/g" lib/tools_template.py > lib/tools.py
 jupyter nbconvert --execute --to notebook --inplace step0*.ipynb
 
 
-for visit_index in {1..${visit_max}}; do
+for visit_index in {1..2}; do
+#for visit_index in $(seq 1 ${visit_max}); do
 
     echo ""
     echo "========== visit index: ${visit_index} =========="
