@@ -27,7 +27,13 @@ BAND_EXPOSURE_TOTAL = {
 }
 
 BAND = BAND_INPUT
-LENS_INDEX_MIN = 0
+
+WIDTH_ARCMIN = 11 
+NUM_SIDE = 33 
+N_LENS = NUM_SIDE ** 2
+
+#LENS_INDEX_MIN = 0
+LENS_INDEX_MIN = N_LENS
 
 ##======================================
 #def mag2flux(mag, m0):

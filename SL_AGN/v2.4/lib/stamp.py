@@ -85,7 +85,12 @@ def get_single_stamp(system_index, time_index, band, folder, lens_filename=None,
         if tot_obs_dates > 30:
             #print(f"{system_index} {band} obs too long!")
             return 1
+            
+        if band not in h5f[f"lsst_lens_{hdf5_index}"]["postage_stamps"].keys():
+            return 1
+        
         stamps = h5f[f"lsst_lens_{hdf5_index}"]["postage_stamps"][band]
+        
         tot_stamps = len(stamps['all_observations'])
         if tot_stamps != tot_obs_dates:
             #print(f"ATT: tot_stamps {tot_stamps} not equal to tot_obs_dates {tot_obs_dates} at system_index, time_index, band: {system_index}, {time_index}, {band}")
@@ -169,6 +174,8 @@ def get_coadd_stamp(system_index, band, folder, lens_filename=None, id_offset=0)
     with h5py.File(lens_filename, 'r') as h5f:
         tot_obs_dates = len(h5f[f"lsst_lens_{hdf5_index}"]['observation_dates'][band])
         if tot_obs_dates > 30:
+            return 1
+        if band not in h5f[f"lsst_lens_{hdf5_index}"]["postage_stamps"].keys():
             return 1
         stamps = h5f[f"lsst_lens_{hdf5_index}"]["postage_stamps"][band]["all_observations"][:]
         tot_stamps = len(stamps)
