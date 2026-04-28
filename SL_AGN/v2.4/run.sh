@@ -1,6 +1,6 @@
 band_arr=("u" "g" "r" "i" "z" "y")
 len_arr=(5 6 13 15 13 16)
-band_index=5
+band_index=0
 
 #----------------------------
 band="${band_arr[$band_index]}"

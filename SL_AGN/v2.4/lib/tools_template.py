@@ -33,7 +33,7 @@ NUM_SIDE = 33
 N_LENS = NUM_SIDE ** 2
 
 #LENS_INDEX_MIN = 0
-LENS_INDEX_MIN = N_LENS
+LENS_INDEX_MIN = 1024 #N_LENS
 
 ##======================================
 #def mag2flux(mag, m0):
