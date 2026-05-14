@@ -16,7 +16,7 @@ mv catalog/*tab*.csv $folder
 
 mv catalog/inj_catalog*visit*fits $folder
 # No need to use it
-[ "${visit}" == "1" ] && mv catalog/inj_catalog*template*fits $folder
+[ "${visit_index}" == "1" ] && mv catalog/inj_catalog*template*fits $folder
 
 #------------------------------
 mv fig/triple_*png $folder
