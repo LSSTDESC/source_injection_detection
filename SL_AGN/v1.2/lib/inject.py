@@ -96,6 +96,26 @@ def calexp_inject_stamp(calexp, inj_catalog):
 
     return injected_exposure
 
+#--------------------------------------
+def visit_inject_stamp(visit, inj_catalog):
+
+    psf = visit.getPsf()
+    photo_calib = visit.getPhotoCalib()
+    wcs = visit.getWcs()
+
+    inject_config = VisitInjectConfig()
+    inject_task = VisitInjectTask(config=inject_config)
+
+    injected_output = inject_task.run(
+        injection_catalogs=inj_catalog,
+        input_exposure=visit.clone(),
+        psf=psf,
+        photo_calib=photo_calib,
+        wcs=wcs,
+    )
+    injected_exposure = injected_output.output_exposure
+
+    return injected_exposure
 
 #--------------------------------------
 def template_inject_stamp(template, inj_catalog):
@@ -117,3 +137,31 @@ def template_inject_stamp(template, inj_catalog):
     injected_exposure = injected_output.output_exposure
 
     return injected_exposure
+
+#-------------------
+# If you want to generate a catalog of stars, simply specify source_type = 'star' and provide magnitude
+'''
+def get_visit_catalogs(num_visits, num_sources=10, source_type, ra=37.93, dec=6.93, extension=0.03, mag_list=[10], mag_min=10, mag_max=15, filename="", n=[2],q=[0.9], beta=[31.0], hlr=[5.0]):
+    source_list = []
+    for i in range(num_sources):
+            source_list.append((np.random.uniform(ra-extension, ra+extension), np.random.uniform(dec-extension, dec+extension), np.random.uniform(10,15, size=num_visits)))
+    inj_catalogs = []
+    for i in range(num_visits):
+        inj_catalogs.append(Table())
+    if(source_type.lower() == 'star' or source_type.lower() == 'sersic'):
+        for time in range(num_times):
+            for source in range(num_sources):
+                inj_catalogs[time] = vstack([inj_catalogs[time], Table(
+                    {'injection_id': [source],
+                        'ra': [source_list[source][0]],
+                        'dec': [source_list[source][1]],
+                        'source_type': ['Star'],
+                        'mag': [source_list[source][2][time]],
+                        'n': n,
+                        'q': q,
+                        'beta': beta,
+                        'half_light_radius': hlr,
+                    }
+                )])
+
+                '''
