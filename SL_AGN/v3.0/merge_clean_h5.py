@@ -2,8 +2,9 @@ import h5py
 import re
 from pathlib import Path
 
-INPUT_FILES = [f"3000sqdeg_lsst_1y_sample_{i}.h5" for i in range(1, 8)]
-OUTPUT_FILE = "3000sqdeg_lsst_1y_sample_merged.h5"
+#INPUT_FILES = [f"3000sqdeg_lsst_1y_sample_{i}.h5" for i in range(1, 8)]
+INPUT_FILES = ["3000sqdeg_lsst_1y_sample_merged.h5"]
+OUTPUT_FILE = "3000sqdeg_lsst_1y_sample_merged_cleaned.h5"
 INPUT_DIR = Path(".")
 KEY_PREFIX = "lsst_lens"
 BANDS = ['u', 'g', 'r', 'i', 'z', 'y']
