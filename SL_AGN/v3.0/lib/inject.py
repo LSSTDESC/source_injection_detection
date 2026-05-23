@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from astropy.table import Table 
+from astropy.table import Table, vstack
 
 from lsst.source.injection import VisitInjectConfig, VisitInjectTask
 from lsst.source.injection import CoaddInjectConfig, CoaddInjectTask
@@ -76,7 +76,7 @@ def make_grid(ra_cen, dec_cen, width_arcmin, num_side):
     return inj_radec
 
 
-def make_inj_catalog(wcs, stamp_mag_list, stamp_filename_list, inj_radec, tag):
+def make_inj_catalog_stamp(wcs, stamp_mag_list, stamp_filename_list, inj_radec, tag):
 
     RA_arr, DEC_arr = inj_radec["ra"], inj_radec["dec"]
     x_arr, y_arr = wcs.skyToPixelArray(RA_arr, DEC_arr, degrees=True)
@@ -95,10 +95,6 @@ def make_inj_catalog(wcs, stamp_mag_list, stamp_filename_list, inj_radec, tag):
         }
     )
 
-    #----------------------------------
-    inj_catalog.write("%s/inj_catalog_%s.fits"%(tl.CATALOG_FOLDER, tag), 
-                      overwrite=True)
-    
     #----------------------------------
     fig, axs = plt.subplots(1, 2, figsize=(8.5, 4),layout="constrained")
     
@@ -142,7 +138,7 @@ def make_inj_catalog_visit(visit_image, stamp_mag, stamp_filename, inj_radec):
 
     visit_tag = "%d_%d"%(visit, detector)
     tag = "visit_%s"%visit_tag
-    inj_catalog_visit = make_inj_catalog(wcs, stamp_mag, stamp_filename, inj_radec, tag)
+    inj_catalog_visit = make_inj_catalog_stamp(wcs, stamp_mag, stamp_filename, inj_radec, tag)
     
     return inj_catalog_visit
     
@@ -158,7 +154,7 @@ def make_inj_catalog_template(template_image, stamp_mag, stamp_filename, inj_rad
     
     template_tag = "%d_%d_%s"%(tract, patch, band)
     tag = "template_%s"%template_tag
-    inj_catalog_template = make_inj_catalog(wcs, stamp_mag, stamp_filename, inj_radec, tag)
+    inj_catalog_template = make_inj_catalog_stamp(wcs, stamp_mag, stamp_filename, inj_radec, tag)
     
     return inj_catalog_template
     
@@ -207,18 +203,77 @@ def template_inject_stamp(template_image, inj_catalog):
 #-------------------
 
 #======================================
-def get_point_mag():
 
 
-    return mag
 
 
-def get_point_coord():
-
+def compute_coord_after_rot(x_c, y_c, delta_x, delta_y, rotation_angle):
+    """Rotate (delta_x, delta_y) clockwise by rotation_angle (deg), then add to (x_c, y_c)."""
+    theta = np.deg2rad(rotation_angle)
+    delta_x_new = delta_x * np.cos(theta) + delta_y * np.sin(theta)
+    delta_y_new = -delta_x * np.sin(theta) + delta_y * np.cos(theta)
+    x = x_c + delta_x_new
+    y = y_c + delta_y_new
     return x, y
 
 
-def compute_coord_after_rot():
+def make_inj_catalog_point(wcs, inj_radec, point_mag_list, point_delta_x_list, point_delta_y_list, rotation_angle, tag):
+
+    RA_arr = inj_radec["ra"]
+    DEC_arr = inj_radec["dec"]
+    x_c_arr, y_c_arr = wcs.skyToPixelArray(RA_arr, DEC_arr, degrees=True)
+
+    all_ra = []
+    all_dec = []
+    all_mag = []
+    all_x = []
+    all_y = []
+
+    for i in range(len(inj_radec)):
+        for j in range(len(point_mag_list[i])):
+            x, y = compute_coord_after_rot(x_c_arr[i], y_c_arr[i],
+                                           point_delta_x_list[i][j],
+                                           point_delta_y_list[i][j],
+                                           rotation_angle)
+            ra, dec = wcs.pixelToSkyArray(np.array([x]), np.array([y]), degrees=True)
+            all_x.append(x)
+            all_y.append(y)
+            all_ra.append(ra[0])
+            all_dec.append(dec[0])
+            all_mag.append(point_mag_list[i][j])
+
+    n_point = len(all_ra)
+    inj_catalog_point = Table(
+        {
+            "injection_id": range(n_point),
+            "ra": all_ra,
+            "dec": all_dec,
+            "source_type": ["Star"] * n_point,
+            "mag": all_mag,
+            "x": all_x,
+            "y": all_y,
+        }
+    )
+
+    return inj_catalog_point
 
 
-def make_inj_catalog_new():
+def make_inj_catalog(wcs, stamp_mag_list, stamp_filename_list, inj_radec,
+                     point_mag_list, point_delta_x_list, point_delta_y_list,
+                     rotation_angle, tag):
+
+    stamp_catalog = make_inj_catalog_stamp(wcs, stamp_mag_list, stamp_filename_list, inj_radec, tag)
+    point_catalog = make_inj_catalog_point(wcs, inj_radec, point_mag_list,
+                                           point_delta_x_list, point_delta_y_list,
+                                           rotation_angle, tag)
+
+    # Offset point source injection_ids to avoid overlap with stamp ids
+    n_stamp = len(stamp_catalog)
+    point_catalog["injection_id"] = point_catalog["injection_id"] + n_stamp
+
+    inj_catalog = vstack([stamp_catalog, point_catalog])
+
+    inj_catalog.write("%s/inj_catalog_%s.fits"%(tl.CATALOG_FOLDER, tag),
+                      overwrite=True)
+
+    return inj_catalog
