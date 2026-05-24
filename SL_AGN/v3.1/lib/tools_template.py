@@ -1,0 +1,51 @@
+import numpy as np
+
+
+#======================================
+FIG_FOLDER = "fig"
+STAMP_FOLDER = "stamp"
+
+CATALOG_FOLDER = "catalog"
+CUTOUT_FOLDER = "cutout"
+
+#--------------------------------------
+CUTOUT_SIZE = 50
+
+PIX2ARCSEC = 0.2
+ARCSEC2PIX = 1./PIX2ARCSEC
+
+#--------------------------------------
+#https://community.lsst.org/t/adding-information-about-year-1-baseline-statistics-to-the-survey-strategy-website/11780/3
+BAND_EXPOSURE_TOTAL = {
+    'u': 5,
+    'g': 6,
+    'r': 13,
+    'i': 15,
+    'z': 13,
+    'y': 16,
+}
+
+BAND = BAND_INPUT
+
+WIDTH_ARCMIN = 11 
+NUM_SIDE = 32
+N_LENS = NUM_SIDE ** 2
+
+LENS_INDEX_MIN = 0
+#LENS_INDEX_MIN = 1024 + N_LENS
+
+
+#======================================
+def newline(prompt=""):
+    print('\n' + '-'*20)
+    print(prompt)
+    print('-'*20)
+
+
+#======================================
+def get_visit_rotation_angle(visit): 
+    
+    rotation_angle0 = visit.visitInfo.getBoresightRotAngle()
+    rotation_angle = rotation_angle0.asDegrees()
+    
+    return rotation_angle
