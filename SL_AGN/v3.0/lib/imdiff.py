@@ -139,6 +139,7 @@ def _get_cutout_bounds(x, y, half, bbox):
     return xmin, xmax, ymin, ymax
 
 
+# For saving individual cutouts, we use afwImage slices, and to use wcs, make sure to add `image.getXY0()` to shift the x,y coordinates when converting to ra,dec. Equivalently, do `wcs.pixelToSky(Point2D(x_parent, y_parent))`.
 def save_cutouts_individual(image, inj_radec, tag):
     """Save one FITS file per injected source (image + variance + mask)."""
 
@@ -237,16 +238,14 @@ def imdiff_detect(tract, patch, band, visit, detector, kernel=None,
     # Run image subtraction and save the kernel.
     difference_image, kernel_new = run_subtract_task(warped_template, visit_image, kernel)
 
-    inj_radec = Table.read(f"{tl.CATALOG_FOLDER}/inj_catalog_visit_{visit}_{detector}.fits")
+    # Note: this includes static stamp + points!
+    inj_catalog_visit = Table.read(f"{tl.CATALOG_FOLDER}/inj_catalog_visit_{visit}_{detector}.fits")
+    sel = inj_catalog_visit["source_type"]=="Stamp"
     
-#    if prefix=='':
-#        tag = "original"
-#    elif prefix=='injected_':
-#        tag = "injected"
-#    else:
-#        print("ATT: Wrong image_type!")
-#        return 1
+    # We only need the stamp ones for ra, dec.
+    inj_radec = inj_catalog_visit[sel]
 
+    #--------------------------------
     tag = f"{visit}_{detector}_{tract}_{patch}_{band}"
     
     vis.plot_triple(visit_image, warped_template, difference_image, inj_radec, f"{prefix}{tag}")

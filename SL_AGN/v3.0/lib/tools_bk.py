@@ -26,15 +26,23 @@ BAND_EXPOSURE_TOTAL = {
     'y': 16,
 }
 
-BAND = BAND_INPUT
+BAND = 'i' #BAND_INPUT
 
-WIDTH_ARCMIN = 11 
-NUM_SIDE = 32
+WIDTH_ARCMIN = 0.5 #11 
+NUM_SIDE = 2 #32
 N_LENS = NUM_SIDE ** 2
 
 LENS_INDEX_MIN = 0
 #LENS_INDEX_MIN = 1024 + N_LENS
 
+##======================================
+#def mag2flux(mag, m0):
+#    return 10**( (mag - m0)/(-2.5) )
+#
+#
+#def flux2mag(flux, m0):
+#    return -2.5 * np.log10(flux) + m0
+#
 
 #======================================
 def newline(prompt=""):
@@ -43,6 +51,22 @@ def newline(prompt=""):
     print('-'*20)
 
 
+#def save_pickle(tag, item, folder):
+#    filename = "%s/%s.pkl"%(folder, tag) 
+#    with open(filename, "wb") as f:
+#        pickle.dump(item, f)
+#
+#    return 0
+#    
+#
+#def load_pickle(tag, folder):
+#    filename = "%s/%s.pkl"%(folder, tag) 
+#    with open(filename, "rb") as f:
+#        item = pickle.load(f)
+#
+#    return item
+#
+#
 #======================================
 def get_visit_rotation_angle(visit): 
     

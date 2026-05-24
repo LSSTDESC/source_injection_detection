@@ -36,26 +36,6 @@ def plot_two_images(image0, image1, title0, title1, tag):
     
 
 def plot_dual(image0, image_inj, inj_radec, tag):
-
-#    if image_type=="visit":
-#        md_dict = image0.metadata.toDict()
-#        visit = md_dict["LSST BUTLER DATAID VISIT"]
-#        detector = md_dict["LSST BUTLER DATAID DETECTOR"]
-#        visit_tag = "%d_%d"%(visit, detector)
-#        tag = "visit_%s"%visit_tag
-        
-#    elif image_type=="template":
-#        md_dict = image0.metadata.toDict()
-#        tract = md_dict["LSST BUTLER DATAID TRACT"]
-#        patch = md_dict["LSST BUTLER DATAID PATCH"]
-#        band = md_dict["LSST BUTLER DATAID BAND"]
-#        template_tag = "%d_%d_%s"%(tract, patch, band)
-#        tag = "template_%s"%template_tag
-        
-#    else:
-#        print("ATT: Wrong image_type!")
-#        return 1
-
     
     xlim_min, xlim_max, ylim_min, ylim_max = \
         (
@@ -78,10 +58,10 @@ def plot_dual(image0, image_inj, inj_radec, tag):
     xlen = xmax - xmin
     ylen = ymax - ymin
 
-    xmin -= 0.05 * xlen
-    xmax += 0.05 * xlen
-    ymin -= 0.05 * ylen
-    ymax += 0.05 * ylen
+    xmin -= 0.1 * xlen
+    xmax += 0.1 * xlen
+    ymin -= 0.1 * ylen
+    ymax += 0.1 * ylen
 
     if xmin<xlim_min:
         xmin = xlim_min
@@ -130,27 +110,6 @@ def plot_three_images(image0, image1, image2, title0, title1, title2, tag):
 
 def plot_triple(image0, image1, image2, inj_radec, tag):
 
-#    md_dict = image0.metadata.toDict()
-#    visit = md_dict["LSST BUTLER DATAID VISIT"]
-#    detector = md_dict["LSST BUTLER DATAID DETECTOR"]
-#    visit_tag = "%d_%d"%(visit, detector)
-        
-#    md_dict = image1.metadata.toDict()
-#    tract = md_dict["LSST BUTLER DATAID TRACT"]
-#    patch = md_dict["LSST BUTLER DATAID PATCH"]
-#    band = md_dict["LSST BUTLER DATAID BAND"]
-#    template_tag = "%d_%d_%s"%(tract, patch, band)
-    
-#    if image_type=="injected":
-#        tag = "injected"
-#    elif image_type=="original":
-#        tag = "original"
-#    else:
-#        print("ATT: Wrong image_type!")
-#        return 1
-
-#    tag = f"{tag}_{visit_tag}_{template_tag}"
-
     xlim_min, xlim_max, ylim_min, ylim_max = \
         (
             image0.getBBox().beginX,
@@ -170,10 +129,10 @@ def plot_triple(image0, image1, image2, inj_radec, tag):
     xlen = xmax - xmin
     ylen = ymax - ymin
 
-    xmin -= 0.05 * xlen
-    xmax += 0.05 * xlen
-    ymin -= 0.05 * ylen
-    ymax += 0.05 * ylen
+    xmin -= 0.1 * xlen
+    xmax += 0.1 * xlen
+    ymin -= 0.1 * ylen
+    ymax += 0.1 * ylen
 
     if xmin<xlim_min:
         xmin = xlim_min

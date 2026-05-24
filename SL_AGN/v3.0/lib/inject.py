@@ -1,4 +1,5 @@
 import lib.tools as tl
+import lib.stamp as stp
 
 import numpy as np
 import matplotlib
@@ -12,21 +13,10 @@ from lsst.source.injection import CoaddInjectConfig, CoaddInjectTask
 
 
 #======================================
-#SIZE_PIX = 4000
-STAMP_WIDTH_PIX = 33
-STAMP_WIDTH_ARCSEC = STAMP_WIDTH_PIX / tl.ARCSEC2PIX
-
-
-#======================================
 def make_grid(ra_cen, dec_cen, width_arcmin, num_side):
 
-    gap_arcsec = (width_arcmin * 60. - STAMP_WIDTH_ARCSEC) / (num_side - 1) - STAMP_WIDTH_ARCSEC
+    gap_arcsec = (width_arcmin * 60. - stp.STAMP_WIDTH_ARCSEC) / (num_side - 1) - stp.STAMP_WIDTH_ARCSEC
     print("gap_arcsec: ", gap_arcsec)
-    #test_side_length = (stamp_width_pix + gap_pix) * (num_side - 1) + stamp_width_pix
-    
-    #gap_pix = gap_arcsec * tl.ARCSEC2PIX
-    
-    #if gap_pix < (0.5 * stamp_width_pix):
     
     if gap_arcsec < 6.0:
         print("ATT: Injection grid too tight!!")
@@ -36,11 +26,11 @@ def make_grid(ra_cen, dec_cen, width_arcmin, num_side):
     # But note angular length on RA needs a factor of cos(DEC)
 
     scale_factor = np.cos(np.deg2rad(dec_cen))
-    ra_start = ra_cen - width_arcmin / 60. / 2 / scale_factor + 0.5 * STAMP_WIDTH_ARCSEC / 3600.
-    ra_end = ra_cen + width_arcmin / 60. / 2 / scale_factor - 0.5 * STAMP_WIDTH_ARCSEC / 3600.
+    ra_start = ra_cen - width_arcmin / 60. / 2 / scale_factor + 0.5 * stp.STAMP_WIDTH_ARCSEC / 3600.
+    ra_end = ra_cen + width_arcmin / 60. / 2 / scale_factor - 0.5 * stp.STAMP_WIDTH_ARCSEC / 3600.
 
-    dec_start = dec_cen - width_arcmin / 60. / 2 + 0.5 * STAMP_WIDTH_ARCSEC / 3600.
-    dec_end = dec_cen + width_arcmin / 60. / 2 - 0.5 * STAMP_WIDTH_ARCSEC / 3600.
+    dec_start = dec_cen - width_arcmin / 60. / 2 + 0.5 * stp.STAMP_WIDTH_ARCSEC / 3600.
+    dec_end = dec_cen + width_arcmin / 60. / 2 - 0.5 * stp.STAMP_WIDTH_ARCSEC / 3600.
 
     ra_arr = np.linspace(ra_start, ra_end, num_side)
     dec_arr = np.linspace(dec_start, dec_end, num_side)
@@ -61,16 +51,7 @@ def make_grid(ra_cen, dec_cen, width_arcmin, num_side):
             "dec": DEC_arr,
         }
     )
-    #inj_radec.write("%s/inj_radec.fits"%tl.CATALOG_FOLDER, overwrite=True)
     
-    #----------------------------------
-    #fig, axs = plt.subplots(1, 1, figsize=(4, 4), layout="constrained")
-    #axs.scatter(RA_arr, DEC_arr)
-    #axs.set_xlabel("RA [deg]")
-    #axs.set_ylabel("DEC [deg]")
-    #axs.invert_xaxis()
-    #plt.savefig("%s/inj_radec.png"%tl.FIG_FOLDER)
-
     #----------------------------------
 
     return inj_radec
@@ -128,7 +109,7 @@ def make_inj_catalog_stamp(wcs, stamp_mag_list, stamp_filename_list, inj_radec, 
     return inj_catalog 
 
 
-def make_inj_catalog_visit(visit_image, stamp_mag, stamp_filename, inj_radec):
+def make_inj_catalog_visit(visit_image, stamp_mag_list, stamp_filename_list, inj_radec):
 
     wcs = visit_image.getWcs()
 
@@ -138,12 +119,12 @@ def make_inj_catalog_visit(visit_image, stamp_mag, stamp_filename, inj_radec):
 
     visit_tag = "%d_%d"%(visit, detector)
     tag = "visit_%s"%visit_tag
-    inj_catalog_visit = make_inj_catalog_stamp(wcs, stamp_mag, stamp_filename, inj_radec, tag)
+    inj_catalog_visit = make_inj_catalog_stamp(wcs, stamp_mag_list, stamp_filename_list, inj_radec, tag)
     
     return inj_catalog_visit
     
 
-def make_inj_catalog_template(template_image, stamp_mag, stamp_filename, inj_radec):
+def make_inj_catalog_template(template_image, stamp_mag_list, stamp_filename_list, inj_radec):
 
     wcs = template_image.getWcs()
     
@@ -154,7 +135,7 @@ def make_inj_catalog_template(template_image, stamp_mag, stamp_filename, inj_rad
     
     template_tag = "%d_%d_%s"%(tract, patch, band)
     tag = "template_%s"%template_tag
-    inj_catalog_template = make_inj_catalog_stamp(wcs, stamp_mag, stamp_filename, inj_radec, tag)
+    inj_catalog_template = make_inj_catalog_stamp(wcs, stamp_mag_list, stamp_filename_list, inj_radec, tag)
     
     return inj_catalog_template
     
@@ -184,28 +165,23 @@ def image_inject(image, inj_catalog, image_type=None):
         photo_calib=photo_calib,
         wcs=wcs,
     )
-    #print(injected_output.output_catalog)
-    #injected_exposure = injected_output.output_exposure
 
     return injected_output.output_exposure, injected_output.output_catalog
 
 
+#--------------------------------------
 def visit_inject(visit_image, inj_catalog):
 
     return image_inject(visit_image, inj_catalog, image_type="visit")
 
 
-#--------------------------------------
 def template_inject(template_image, inj_catalog):
 
     return image_inject(template_image, inj_catalog, image_type="template")
     
-#-------------------
+
 
 #======================================
-
-
-
 
 def compute_coord_after_rot(x_c, y_c, delta_x, delta_y, rotation_angle):
     """Rotate (delta_x, delta_y) clockwise by rotation_angle (deg), then add to (x_c, y_c)."""
@@ -218,6 +194,9 @@ def compute_coord_after_rot(x_c, y_c, delta_x, delta_y, rotation_angle):
 
 
 def make_inj_catalog_point(wcs, inj_radec, point_mag_list, point_delta_x_list, point_delta_y_list, rotation_angle, tag):
+    """
+        point_mag_list, point_delta_x_list, point_delta_y_list: [[lens_i_image_0, lens_i_image_1, ...], [lens_i+1_image_0, lens_i+1_image_1, ...], ...]
+    """
 
     RA_arr = inj_radec["ra"]
     DEC_arr = inj_radec["dec"]

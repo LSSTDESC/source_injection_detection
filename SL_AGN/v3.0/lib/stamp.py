@@ -1,9 +1,6 @@
-#import os
 import lib.tools as tl
 import h5py
-#import pandas as pd
 import numpy as np
-#from scipy.ndimage import gaussian_filter
 from astropy.table import Table
 from astropy.io import fits
 from astropy.wcs import WCS
@@ -35,6 +32,11 @@ LENS_FILENAMES = [
 ]
 
 
+STAMP_WIDTH_PIX = 33
+STAMP_WIDTH_ARCSEC = STAMP_WIDTH_PIX / tl.ARCSEC2PIX
+
+
+#============================
 def get_n_observations(system_index, band, lens_filename, id_offset=0):
     """Return number of observation epochs, or None if system exceeds limit (>30)."""
     hdf5_index = system_index - id_offset
@@ -81,26 +83,20 @@ def get_single_stamp(system_index, time_index, band, folder, lens_filename=None,
 
     with h5py.File(lens_filename, 'r') as h5f:
 
-#        system_metadata = pd.DataFrame(h5f[system_tag]["metadata"][:],
-#                                       columns=h5f["metadata_columns"][:])
-
-        # At that time point
-#        system_lc = h5f[system_tag]["light_curve"][:, time_index]
-#        system_image = h5f[system_tag]["images"][time_index]
         tot_obs_dates = len(h5f[f"lsst_lens_{hdf5_index}"]['observation_dates'][band])
         if tot_obs_dates > 30:
             #print(f"{system_index} {band} obs too long!")
-            return 1
+            return None
             
         if band not in h5f[f"lsst_lens_{hdf5_index}"]["postage_stamps"].keys():
-            return 1
+            return None
         
         stamps = h5f[f"lsst_lens_{hdf5_index}"]["postage_stamps"][band]
         
         tot_stamps = len(stamps['all_observations'])
         if tot_stamps != tot_obs_dates:
             #print(f"ATT: tot_stamps {tot_stamps} not equal to tot_obs_dates {tot_obs_dates} at system_index, time_index, band: {system_index}, {time_index}, {band}")
-            return 1
+            return None
             
         stamp_image = stamps['all_observations'][time_index][:]
 
@@ -116,49 +112,6 @@ def get_single_stamp(system_index, time_index, band, folder, lens_filename=None,
     hdu.header["TOT_MAG"] = total_mag
 
     #----------------------------------
-#    lens_mag = system_metadata[b"deflector_light_magnitude"][0]
-#    lens_flux = mag2flux(lens_mag, MAG0)
-#    print("lens_flux: ", lens_flux)
-#    print("lens_mag: ", lens_mag)
-
-#    hdu.header["lens_flux"] = lens_flux
-#    hdu.header["lens_mag"] = lens_mag
-
-    #----------------------------------
-#    source_number = len(system_lc)    
-#    source_flux_list = []
-
-#    for source_index in range(source_number):
-#        source_mag = system_lc[source_index]
-#        source_flux = mag2flux(source_mag, MAG0)
-#        source_flux_list.append(source_flux)
-#        print("source_flux_%d: "%source_index, source_flux)
-#        print("source_mag_%d: "%source_index, source_mag)
-
-#        hdu.header["source_flux_%d"%source_index] = source_flux
-#        hdu.header["source_mag_%d"%source_index] = source_mag
-    
-    #----------------------------------
-#    arc_flux = total_flux - lens_flux - np.sum(source_flux_list)
-#    arc_mag = flux2mag(arc_flux, MAG0)
-#    print("arc_flux: ", arc_flux)
-#    print("arc_mag: ", arc_mag)
-
-#    hdu.header["arc_flux"] = arc_flux
-#    hdu.header["arc_mag"] = arc_mag
-    
-#    #----------------------------------
-#    plt.figure()
-    #plt.imshow(np.log( system_image ), origin="lower")
-#    plt.imshow(np.arcsinh( system_image ), origin="lower")
-#    plt.colorbar()
-#    plt.tight_layout()
-#    plt.savefig("%s/%s.png"%(folder, image_tag) )
-#    plt.close()
-    
-    #----------------------------------
-    #fits.writeto("%s/%s.fits"%(folder, image_tag), system_image, overwrite=True)
-
     hdu.writeto(f"{folder}/{image_tag}.fits", overwrite=True)
     
     #----------------------------------
@@ -180,33 +133,17 @@ def get_coadd_stamp(system_index, band, folder, lens_filename=None, id_offset=0)
     with h5py.File(lens_filename, 'r') as h5f:
         tot_obs_dates = len(h5f[f"lsst_lens_{hdf5_index}"]['observation_dates'][band])
         if tot_obs_dates > 30:
-            return 1
+            return None
         if band not in h5f[f"lsst_lens_{hdf5_index}"]["postage_stamps"].keys():
-            return 1
+            return None
         stamps = h5f[f"lsst_lens_{hdf5_index}"]["postage_stamps"][band]["all_observations"][:]
         tot_stamps = len(stamps)
         if tot_stamps != tot_obs_dates:
             #print(f"ATT: tot_stamps {tot_stamps} not equal to tot_obs_dates {tot_obs_dates} at system_index, time_index, band: {system_index}, {time_index}, {band}")
-            return 1
+            return None
         
-        #system_image = h5f[system_tag]["images"][:]
-
-        #----------------------------------
-#        mean_image = None
-#        counter = 0
-        
-#        for key in stamps:
-#            stamp_image = stamps[key][:]
-#            if mean_image is None:
-#                mean_image = np.zeros_like(stamp_image, dtype=float)
-#            mean_image += stamp_image
-#            counter += 1
-
-#        mean_image /= counter
     
     mean_image = np.mean(stamps, axis=0)
-    
-    #mean_image = np.mean(system_image, axis=0)
 
     hdu = fits.PrimaryHDU(mean_image)
 
@@ -221,127 +158,11 @@ def get_coadd_stamp(system_index, band, folder, lens_filename=None, id_offset=0)
     hdu.header["TOT_MAG"] = total_mag
 
     #----------------------------------
-#    plt.figure()
-#    plt.imshow(mean_image, norm='asinh', origin="lower")
-#    plt.colorbar()
-#    plt.tight_layout()
-#    plt.savefig(f"{folder}/{image_tag}.png")
-#    plt.close()
-    
-    #----------------------------------
     #fits.writeto("%s/%s.fits"%(folder, image_tag), mean_image, overwrite=True)
 
     hdu.writeto(f"{folder}/{image_tag}.fits", overwrite=True)
     
     return mean_image
-
-
-#============================
-#def get_diff_stamp(system_index, time_index, folder):
-
-#    soften_factor = 1.5
-
-#    system_tag = "system_%d"%system_index
-#    image_tag = "%s_diff"%system_tag
-
-    #----------------------------------
-#    single_image_tag = "%s_%d"%(system_tag, time_index)
-#    single_image_path = "%s/%s.fits"%(folder, single_image_tag)
-    
-#    if os.path.exists(single_image_path): 
-#        print("%s exists!"%single_image_path)
-#        single_image = fits.getdata(single_image_path)
-        
-#    else:
-#        single_image = get_single_stamp(system_index, time_index)
-
-    #----------------------------------
-#    coadd_image_tag = "%s_coadd"%system_tag
-#    coadd_image_path = "%s/%s.fits"%(folder, coadd_image_tag)
-    
-#    if os.path.exists(coadd_image_path): 
-#        print("%s exists!"%coadd_image_path)
-#        coadd_image = fits.getdata(coadd_image_path)
-        
-#    else:
-#        coadd_image = get_coadd_stamp(system_index)
-
-    #----------------------------------
-#    diff_image = single_image - coadd_image
-#    threshold = np.max(np.abs(diff_image)) * soften_factor
-
-    #----------------------------------
-#    fig, axs = plt.subplots(1, 2, figsize=(6.5, 3), layout="tight")
-#    im = axs[0].imshow(diff_image, 
-#                       origin="lower", 
-#                       cmap="bwr", 
-#                       vmin=-threshold, 
-#                       vmax=threshold, 
-#                      )
-    
-#    fig.colorbar(im, ax=axs[0])
-    
-#    axs[0].set_title("Original")
-
-    #----------------------------------
-#    sigma_pix = 2.
-#    pix2arcsec = 0.2
-    # https://ned.ipac.caltech.edu/level5/Leo/Stats2_3.html
-#    seeing_pix = 2. * sigma_pix * np.sqrt( 2.*np.log(2.) )
-#    seeing_arcsec = seeing_pix * pix2arcsec # fwhm
-#    print("\nConvolving with seeing_arcsec: ", seeing_arcsec)
-
-#    diff_image_convolved = gaussian_filter(diff_image, sigma=sigma_pix)
-#    threshold = np.max(np.abs(diff_image_convolved)) * soften_factor
-    
-#    im = axs[1].imshow(diff_image_convolved, 
-#                       origin="lower", 
-#                       cmap="bwr", 
-#                       vmin=-threshold, 
-#                       vmax=threshold, 
-#                      )
-    
-#    fig.colorbar(im, ax=axs[1])
-
-#    axs[1].set_title("Conv %.2f\" Gaussian"%seeing_arcsec)
-    
-    #----------------------------------
-#    plt.savefig("%s/%s.png"%(folder, image_tag) )
-
-    #----------------------------------
-
-#    return diff_image
-
-    
-
-#============================
-#def check_flux_diff(system_index):
-
-#    system_tag = "system_%d"%system_index
-
-#    with h5py.File(LENS_FILENAME, 'r') as h5f:
-#        system_lc = h5f[system_tag]["light_curve"][:, :]
-
-#    system_lc_flux = mag2flux(system_lc, MAG0)
-    
-#    mean_flux = np.mean(system_lc_flux, axis=1)
-    #print("mean_flux: ", mean_flux )
-
-#    diff_flux = system_lc_flux.T - mean_flux
-    #print("diff_flux: \n", diff_flux )
-
-    # There could be dipoles, so just consider sum
-#    sum_diff_flux = np.abs( np.sum(diff_flux, axis=1) )
-    #print("\nsum_diff_flux: ", sum_diff_flux )
-
-#    argsort = np.argsort(sum_diff_flux)
-    #print(argsort)
-#    max_index = argsort[-1]
-#    max_index2 = argsort[-2]
-#    print("max indices: ", max_index, max_index2)
-    #print("max values: ", sum_diff_flux[max_index], sum_diff_flux[max_index2])
-    
-#    return 0
 
 
 #======================================
