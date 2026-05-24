@@ -161,7 +161,7 @@ def make_inj_catalog_template(template_image, stamp_mag, stamp_filename, inj_rad
 
 
 #======================================
-def image_inject_stamp(image, inj_catalog, image_type=None):
+def image_inject(image, inj_catalog, image_type=None):
 
     if image_type=="visit":
         inject_config = VisitInjectConfig()
@@ -190,15 +190,15 @@ def image_inject_stamp(image, inj_catalog, image_type=None):
     return injected_output.output_exposure, injected_output.output_catalog
 
 
-def visit_inject_stamp(visit_image, inj_catalog):
+def visit_inject(visit_image, inj_catalog):
 
-    return image_inject_stamp(visit_image, inj_catalog, image_type="visit")
+    return image_inject(visit_image, inj_catalog, image_type="visit")
 
 
 #--------------------------------------
-def template_inject_stamp(template_image, inj_catalog):
+def template_inject(template_image, inj_catalog):
 
-    return image_inject_stamp(template_image, inj_catalog, image_type="template")
+    return image_inject(template_image, inj_catalog, image_type="template")
     
 #-------------------
 
