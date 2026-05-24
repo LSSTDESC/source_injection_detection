@@ -1,7 +1,7 @@
 band="$1"
 visit_index="$2"
 field="ecdfs"
-version="v2.0.2"
+version="v3.0"
 
 tag="${version}_${field}_${band}_${visit_index}"
 

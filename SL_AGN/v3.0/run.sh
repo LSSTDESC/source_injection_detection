@@ -1,6 +1,6 @@
 band_arr=("u" "g" "r" "i" "z" "y")
 len_arr=(5 6 13 15 13 16)
-band_index=2
+band_index=0
 
 #----------------------------
 band="${band_arr[$band_index]}"
@@ -29,5 +29,5 @@ for visit_index in $(seq 1 ${visit_max}); do
 done
 
 #----------------------------
-#rm fig/injected_temp*fits 
+rm fig/*temp*fits 
 #mv stamp stamp_${band}
