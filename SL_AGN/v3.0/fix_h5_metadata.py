@@ -22,7 +22,7 @@ import h5py
 
 BANDS = ['u', 'g', 'r', 'i', 'z', 'y']
 N_FILES = 7
-FOLDER = "lens_finding_postage_stamps_dataset"
+FOLDER = "." #"lens_finding_postage_stamps_dataset"
 
 
 def get_csv_id_mapping(setid):

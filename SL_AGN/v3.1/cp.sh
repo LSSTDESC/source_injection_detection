@@ -1,7 +1,7 @@
 band="$1"
 iter_index="$2"
 field="ecdfs"
-version="v3.0"
+version="v3.1"
 
 tag="${version}_${field}_${band}_${iter_index}"
 
