@@ -193,9 +193,10 @@ def compute_coord_after_rot(x_c, y_c, delta_x, delta_y, rotation_angle):
     return x, y
 
 
-def make_inj_catalog_point(wcs, inj_radec, point_mag_list, point_delta_x_list, point_delta_y_list, rotation_angle, tag):
+def make_inj_catalog_point(wcs, inj_radec, point_mag_list, point_delta_x_list, point_delta_y_list, rotation_angle, tag, time_index_list=None):
     """
         point_mag_list, point_delta_x_list, point_delta_y_list: [[lens_i_image_0, lens_i_image_1, ...], [lens_i+1_image_0, lens_i+1_image_1, ...], ...]
+        time_index_list: [time_index_for_lens_i, time_index_for_lens_i+1, ...] (one per system, -1 for template)
     """
 
     RA_arr = inj_radec["ra"]
@@ -207,8 +208,10 @@ def make_inj_catalog_point(wcs, inj_radec, point_mag_list, point_delta_x_list, p
     all_mag = []
     all_x = []
     all_y = []
+    all_time_index = []
 
     for i in range(len(inj_radec)):
+        ti = time_index_list[i] if time_index_list is not None else -1
         for j in range(len(point_mag_list[i])):
             x, y = compute_coord_after_rot(x_c_arr[i], y_c_arr[i],
                                            point_delta_x_list[i][j],
@@ -220,6 +223,7 @@ def make_inj_catalog_point(wcs, inj_radec, point_mag_list, point_delta_x_list, p
             all_ra.append(ra[0])
             all_dec.append(dec[0])
             all_mag.append(point_mag_list[i][j])
+            all_time_index.append(ti)
 
     n_point = len(all_ra)
     inj_catalog_point = Table(
@@ -231,6 +235,7 @@ def make_inj_catalog_point(wcs, inj_radec, point_mag_list, point_delta_x_list, p
             "mag": all_mag,
             "x": all_x,
             "y": all_y,
+            "time_index": all_time_index,
         }
     )
 
@@ -239,12 +244,13 @@ def make_inj_catalog_point(wcs, inj_radec, point_mag_list, point_delta_x_list, p
 
 def make_inj_catalog(wcs, stamp_mag_list, stamp_filename_list, inj_radec,
                      point_mag_list, point_delta_x_list, point_delta_y_list,
-                     rotation_angle, tag):
+                     rotation_angle, tag, time_index_list=None):
 
     stamp_catalog = make_inj_catalog_stamp(wcs, stamp_mag_list, stamp_filename_list, inj_radec, tag)
     point_catalog = make_inj_catalog_point(wcs, inj_radec, point_mag_list,
                                            point_delta_x_list, point_delta_y_list,
-                                           rotation_angle, tag)
+                                           rotation_angle, tag,
+                                           time_index_list=time_index_list)
 
     # Offset point source injection_ids to avoid overlap with stamp ids
     n_stamp = len(stamp_catalog)
