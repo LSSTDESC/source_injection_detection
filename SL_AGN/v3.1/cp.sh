@@ -1,9 +1,9 @@
 band="$1"
-visit_index="$2"
+iter_index="$2"
 field="ecdfs"
 version="v3.0"
 
-tag="${version}_${field}_${band}_${visit_index}"
+tag="${version}_${field}_${band}_${iter_index}"
 
 
 #------------------------------
@@ -16,7 +16,7 @@ mv catalog/*tab*.csv $folder
 
 mv catalog/inj_catalog*visit*fits $folder
 # No need to use it
-[ "${visit_index}" == "1" ] && mv catalog/inj_catalog*template*fits $folder
+[ "${iter_index}" == "1" ] && mv catalog/inj_catalog*template*fits $folder
 
 #------------------------------
 mv fig/triple_*png $folder
