@@ -17,6 +17,7 @@ from PIL import Image, ImageDraw
 from antares_client.search import search, get_by_id, get_thumbnails
 from astroquery.mast import Observations
 from astroquery.esa.euclid import Euclid
+from astroquery.vizier import Vizier
 from astropy.coordinates import SkyCoord
 from astropy.io import fits
 import astropy.units as u
@@ -59,11 +60,44 @@ def get_ps1_color_cutout(ra, dec, size=120, output_size=256):
     return r.content, label
 
 
-def get_hst_cutout(ra, dec, fov_deg=0.003, size=256):
-    """Fetch HST cutout via CDS HiPS2FITS, trying multiple band maps."""
-    for hips in ['CDS/P/HST/wideV', 'CDS/P/HST/color', 'CDS/P/HST/I',
-                 'CDS/P/HST/R', 'CDS/P/HST/V', 'CDS/P/HST/B',
-                 'CDS/P/HST/SDSSr', 'CDS/P/HST/SDSSz']:
+def _fetch_hips_grayscale(hips, ra, dec, fov_deg, size):
+    """Fetch a single HiPS band as grayscale numpy array."""
+    url = (f"https://alasky.cds.unistra.fr/hips-image-services/hips2fits"
+           f"?hips={hips}&width={size}&height={size}"
+           f"&fov={fov_deg}&projection=TAN&coordsys=icrs"
+           f"&ra={ra}&dec={dec}&format=jpg")
+    try:
+        r = requests.get(url, timeout=15)
+        if r.status_code == 200 and len(r.content) > 5000:
+            return np.array(Image.open(BytesIO(r.content)).convert('L'))
+    except Exception:
+        pass
+    return None
+
+
+def _hips_color_composite(channel_maps, ra, dec, fov_deg, size):
+    """Try to build RGB composite from 3 sets of HiPS band candidates.
+    channel_maps: list of (red_maps, green_maps, blue_maps).
+    Returns (jpeg_bytes, 'color') or (None, None).
+    """
+    channels = {}
+    for name, maps in zip('rgb', channel_maps):
+        for hips in maps:
+            arr = _fetch_hips_grayscale(hips, ra, dec, fov_deg, size)
+            if arr is not None:
+                channels[name] = arr
+                break
+    if len(channels) == 3:
+        rgb = np.stack([channels['r'], channels['g'], channels['b']], axis=-1)
+        buf = BytesIO()
+        Image.fromarray(rgb).save(buf, format='JPEG')
+        return buf.getvalue(), 'color'
+    return None, None
+
+
+def _hips_single_band(hips_list, ra, dec, fov_deg, size):
+    """Try each HiPS map, return first valid (jpeg_bytes, band_name) or (None, None)."""
+    for hips in hips_list:
         url = (f"https://alasky.cds.unistra.fr/hips-image-services/hips2fits"
                f"?hips={hips}&width={size}&height={size}"
                f"&fov={fov_deg}&projection=TAN&coordsys=icrs"
@@ -71,28 +105,46 @@ def get_hst_cutout(ra, dec, fov_deg=0.003, size=256):
         try:
             r = requests.get(url, timeout=15)
             if r.status_code == 200 and len(r.content) > 5000:
-                return r.content
+                return r.content, hips.split('/')[-1]
         except Exception:
             continue
-    return None
+    return None, None
+
+
+def get_hst_cutout(ra, dec, fov_deg=0.003, size=256):
+    """Fetch HST cutout. Try color composite (I/V/B), fall back to single band.
+    Returns (bytes, label) or (None, None).
+    """
+    blob, label = _hips_color_composite(
+        [['CDS/P/HST/I', 'CDS/P/HST/SDSSz', 'CDS/P/HST/R'],
+         ['CDS/P/HST/V', 'CDS/P/HST/wideV', 'CDS/P/HST/SDSSr'],
+         ['CDS/P/HST/B', 'CDS/P/HST/SDSSg']],
+        ra, dec, fov_deg, size)
+    if blob:
+        return blob, label
+    return _hips_single_band(
+        ['CDS/P/HST/wideV', 'CDS/P/HST/color', 'CDS/P/HST/I',
+         'CDS/P/HST/R', 'CDS/P/HST/V', 'CDS/P/HST/B',
+         'CDS/P/HST/SDSSr', 'CDS/P/HST/SDSSz'],
+        ra, dec, fov_deg, size)
 
 
 def get_jwst_cutout(ra, dec, fov_deg=0.003, size=256):
-    """Fetch JWST cutout via CDS HiPS2FITS, trying multiple band maps."""
-    for hips in ['ESAVO/P/JWST/NIRCam_Imaging', 'CDS/P/JWST/F444W',
-                 'CDS/P/JWST/F200W', 'CDS/P/JWST/F150W',
-                 'CDS/P/JWST/F115W', 'CDS/P/JWST/EPO']:
-        url = (f"https://alasky.cds.unistra.fr/hips-image-services/hips2fits"
-               f"?hips={hips}&width={size}&height={size}"
-               f"&fov={fov_deg}&projection=TAN&coordsys=icrs"
-               f"&ra={ra}&dec={dec}&format=jpg")
-        try:
-            r = requests.get(url, timeout=15)
-            if r.status_code == 200 and len(r.content) > 5000:
-                return r.content
-        except Exception:
-            continue
-    return None
+    """Fetch JWST cutout. Try color composite (F444W/F200W/F115W), fall back to single band.
+    Returns (bytes, label) or (None, None).
+    """
+    blob, label = _hips_color_composite(
+        [['CDS/P/JWST/F444W'],
+         ['CDS/P/JWST/F200W', 'CDS/P/JWST/F150W'],
+         ['CDS/P/JWST/F115W', 'CDS/P/JWST/F090W']],
+        ra, dec, fov_deg, size)
+    if blob:
+        return blob, label
+    return _hips_single_band(
+        ['ESAVO/P/JWST/NIRCam_Imaging', 'CDS/P/JWST/F444W',
+         'CDS/P/JWST/F200W', 'CDS/P/JWST/F150W',
+         'CDS/P/JWST/F115W', 'CDS/P/JWST/EPO'],
+        ra, dec, fov_deg, size)
 
 
 def get_euclid_cutout(ra, dec, radius_arcmin=0.1):
@@ -217,6 +269,22 @@ def hst_jwst_coverage(ra, dec, radius_arcsec=6.0):
     return result
 
 
+def query_ogle(ra, dec, radius_arcsec=5.0):
+    """Query VizieR for OGLE catalog matches (variable stars, microlensing, etc.).
+    Returns list of (table_name, astropy Table) tuples, or empty list if no match.
+    """
+    coord = SkyCoord(ra, dec, unit='deg')
+    v = Vizier(columns=['*'], row_limit=10)
+    try:
+        results = v.query_region(coord, radius=radius_arcsec * u.arcsec,
+                                 catalog='OGLE')
+    except Exception:
+        return []
+    if results is None:
+        return []
+    return [(name, table) for name, table in zip(results.keys(), results)]
+
+
 # --- Utilities -------------------------------------------------------------
 
 def nJy_to_AB(flux_nJy):
@@ -234,16 +302,17 @@ def fmt_sigma(val, err):
     return f'{val:.2f} +/- {err:.2f} ({sigma:.1f}σ)'
 
 
-def add_scale_bar(img_bytes, pixscale_arcsec, bar_arcsec=1.0, fmt='jpeg'):
+def add_scale_bar(img_bytes, pixscale_arcsec, bar_arcsec=1.0, fmt='jpeg', color='white'):
     """Draw a horizontal 1 arcsec scale bar on the lower-right of a cutout image."""
     img = Image.open(BytesIO(img_bytes)).convert('RGB')
     draw = ImageDraw.Draw(img)
     bar_px = int(round(bar_arcsec / pixscale_arcsec))
-    margin = 5
-    y = img.height - margin
-    x_right = img.width - margin
+    margin_x = 5
+    margin_y = 15
+    y = img.height - margin_y
+    x_right = img.width - margin_x
     x_left = x_right - bar_px
-    draw.line([(x_left, y), (x_right, y)], fill='white', width=1)
+    draw.line([(x_left, y), (x_right, y)], fill=color, width=1)
     buf = BytesIO()
     img.save(buf, format=fmt.upper())
     return buf.getvalue()
