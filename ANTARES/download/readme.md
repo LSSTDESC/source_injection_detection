@@ -16,4 +16,6 @@ Here we store code for downloading tagged alerts from ANTARES.
 
 `check_dates.ipynb`: make histograms for the alert dates (based on the locus query result).
 
+`skip_alerts_before_May_27.ipynb`: skip the alerts before the `lantern` filter was implemented; clean empty loci; remove duplicated loci and alerts.
+
 `API-v2-endpoint.ipynb`: initial test using the ANTARES' API v2.
