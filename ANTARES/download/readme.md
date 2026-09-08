@@ -1,4 +1,8 @@
-Here we store code for downloading tagged alerts from ANTARES.
+Here we store code for downloading tagged alerts from ANTARES. 
+
+The v1 API is based on the search function [here](https://nsf-noirlab.gitlab.io/csdc/antares/client/_modules/antares_client/search.html). 
+
+The v2 API is listed [here](https://api.antares.noirlab.edu/docs).
 
 ## What has been updated
 
