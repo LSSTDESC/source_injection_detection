@@ -18,8 +18,16 @@ The v2 API is listed [here](https://api.antares.noirlab.edu/docs).
 
 `query_v4.ipnb` (in preparation): new API?
 
+---
+
 `check_dates.ipynb`: make histograms for the alert dates (based on the locus query result).
 
 `skip_alerts_before_May_27.ipynb`: skip the alerts before the `lantern` filter was implemented; clean empty loci; remove duplicated loci and alerts.
+
+`check_info_visualization.ipynb`: make sky plots for the cleaned loci/alerts.
+
+`lantern_second_pass_local_candidate`: run 2nd pass on the cleaned loci/alerts to get candidates.
+
+---
 
 `API-v2-endpoint.ipynb`: initial test using the ANTARES' API v2.
