@@ -26,7 +26,9 @@ The v2 API is listed [here](https://api.antares.noirlab.edu/docs).
 
 `check_info_visualization.ipynb`: make sky plots for the cleaned loci/alerts.
 
-`lantern_second_pass_local_candidate`: run 2nd pass on the cleaned loci/alerts to get candidates.
+`lantern_second_pass_local_candidate.ipynb`: run 2nd pass on the cleaned loci/alerts to get candidates.
+
+`lantern_second_pass_local_candidate_multi_loci.ipynb`: run 2nd pass on the cleaned loci/alerts to get candidates; if some loci are close, treat as one target.
 
 ---
 
