@@ -6,4 +6,4 @@
 
 ---
 ## Updated
-`lantern_second_pass_multi_loci.ipynb`: run second pass on the downloaded loci (group loci within 3 arcseconds, load second-pass pickled model, calculate second-pass score, and select candidates)
+`lantern_second_pass_multi_loci.ipynb`: run second pass on the downloaded loci (from query_v4; group loci within 3 arcseconds, load second-pass pickled model, calculate second-pass score, and select candidates)
