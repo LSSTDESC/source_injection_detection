@@ -10,6 +10,6 @@
 
 ## Updated (uploaded Nov 2026)
 
-`lantern_candidate_rgb_vetting_new.ipynb`: take the catalog of targets after 2nd pass and Gaia pm/parallax cuts; early vetting (saves PDF rather than HTML, see below); extendedness and PSF–aperture flux cuts; known-lens comparisons
+`lantern_candidate_rgb_vetting_new.ipynb`: take the catalog of targets after 2nd pass and Gaia pm/parallax cuts; early vetting (saves PDF rather than HTML, see below); extendedness and PSF–aperture flux cuts (can be adjusted for point sources or extended ones in DIA); known-lens comparisons
 
 `lantern_candidate_cutout_viewer.ipynb`: visual inspection using DP2, Legacy and ANTARES images; generates PDFs
