@@ -16,9 +16,11 @@ The v2 API is listed [here](https://api.antares.noirlab.edu/docs).
 
 `query_v3-2.ipynb`: Add a few Gaia quantities (10k loci).
 
+## Updated (uploaded Nov 2026)
+
 `query_v4.ipnb`: new API (v2) on ANTARES for loci/alerts. There are two v4 notebooks currently (download 10k and (additional) 100k loci). Elasticsearch has a limit of 10k per query (result ordering unchanged by default), and the 2nd one use a random score (seed) to obtain different samples. The 2nd notebook also gets Gaia info via v1 API (so it's "hybrid"; this can be updated). In the future we can try downloading loci by RA; there can still be a 10k limit, which can be solved by splitting the angle range by half each time.
 
----
+## Others
 
 `check_dates.ipynb`: make histograms for the alert dates (based on the locus query result).
 
