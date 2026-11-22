@@ -16,4 +16,4 @@
 
 `lantern_individual_target_html_viewer`: (notebook or python script) detailed individual-target HTML, including coadds, alerts, PSFs and candidate metadata.
 
-
+`lantern_dp2_irg_candidate_grid.ipynb`: DP2 cutouts; `lantern_dp2_predicted_irg_grid.ipynb`: SharPy deconvolution; `predicted_irg_grid_auto_per_image_band`: automatic linear min/max instead of fixed min/max.
