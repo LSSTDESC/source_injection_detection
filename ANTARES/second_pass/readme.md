@@ -5,7 +5,7 @@
 `lantern_candidate_analysis_after_2nd_pass.ipynb`: make plots for the candidates after the 2nd pass; select new candidates by Gaia info, mark milliquas.
 
 
-## Updated
+## Updated (uploaded Nov 2026)
 
 `lantern_second_pass_multi_loci.ipynb`: run second pass on the downloaded loci (from query_v4; group loci within 3 arcseconds, load second-pass pickled model, calculate second-pass score, and select candidates).
 
