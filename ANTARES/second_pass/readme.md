@@ -14,3 +14,5 @@
 `lantern_candidate_analysis_multi_loci_extra_plots.ipynb`: supplementary notebook for `lantern_candidate_analysis_multi_loci.ipynb` showing extra diagnostic plots.
 
 `lantern_variable_star_crossmatch`: version a and b; take input `targets.csv` with columns "name,ra,dec" and check variable stars in Gaia, AAVSO, OGLE (version b omits Gaia due to speed).
+
+`lantern_low_extendedness.ipynb`: select low-extendedness candidates after Gaia PM/parallax rejection, without a Gaia color cut.
