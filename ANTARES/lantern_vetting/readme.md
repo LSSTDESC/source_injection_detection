@@ -7,3 +7,7 @@
 ---
 
 `vetting.ipynb` checks a single locus, while `vetting_2.ipynb` goes through a few loci and takes notes (more details in `vetting_lib.py`).
+
+## Updated (uploaded Nov 2026)
+
+`lantern_candidate_rgb_vetting_new.ipynb`: take the catalog of targets after 2nd pass and Gaia pm/parallax cuts; early vetting (saves PDF rather than HTML, see below); extendedness and PSF–aperture flux cuts; known-lens comparisons
